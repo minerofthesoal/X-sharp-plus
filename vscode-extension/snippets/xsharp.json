@@ -1,0 +1,441 @@
+{
+  "Main Entry Point": {
+    "prefix": "quest",
+    "body": [
+      "quest() {",
+      "    $0",
+      "}"
+    ],
+    "description": "Main entry point function (quest)"
+  },
+  "Function Definition": {
+    "prefix": "forge",
+    "body": [
+      "forge ${1:name}(${2:params}) -> ${3:void} {",
+      "    $0",
+      "}"
+    ],
+    "description": "Define a function (forge)"
+  },
+  "Function No Return": {
+    "prefix": "forgev",
+    "body": [
+      "forge ${1:name}(${2:params}) {",
+      "    $0",
+      "}"
+    ],
+    "description": "Define a void function (forge)"
+  },
+  "Entity Definition": {
+    "prefix": "entity",
+    "body": [
+      "entity ${1:Name} {",
+      "    morph ${2:field}: ${3:blade}",
+      "",
+      "    forge conjure(${4:params}) {",
+      "        $0",
+      "    }",
+      "}"
+    ],
+    "description": "Define an entity (class)"
+  },
+  "Entity Extends": {
+    "prefix": "entityext",
+    "body": [
+      "entity ${1:Name} extends ${2:Base} {",
+      "    morph ${3:field}: ${4:blade}",
+      "",
+      "    forge conjure(${5:params}) {",
+      "        $0",
+      "    }",
+      "}"
+    ],
+    "description": "Define an entity that extends another"
+  },
+  "Entity with Methods": {
+    "prefix": "entityfull",
+    "body": [
+      "entity ${1:Name} {",
+      "    morph ${2:field}: ${3:blade}",
+      "",
+      "    forge conjure(${4:params}) {",
+      "        self.${2:field} = ${5:value}",
+      "    }",
+      "",
+      "    forge ${6:method}(${7}) -> ${8:void} {",
+      "        $0",
+      "    }",
+      "",
+      "    forge toString() -> scroll {",
+      "        unleash \"${1:Name}(#{self.${2:field}})\"",
+      "    }",
+      "}"
+    ],
+    "description": "Entity with constructor, method, and toString"
+  },
+  "Realm (Namespace)": {
+    "prefix": "realm",
+    "body": [
+      "realm ${1:name} {",
+      "    $0",
+      "}"
+    ],
+    "description": "Define a namespace (realm)"
+  },
+  "If Statement": {
+    "prefix": "oracle",
+    "body": [
+      "oracle (${1:condition}) {",
+      "    $0",
+      "}"
+    ],
+    "description": "If statement (oracle)"
+  },
+  "If/Else Statement": {
+    "prefix": "oracleelse",
+    "body": [
+      "oracle (${1:condition}) {",
+      "    $2",
+      "} otherwise {",
+      "    $0",
+      "}"
+    ],
+    "description": "If/else statement (oracle/otherwise)"
+  },
+  "Else If": {
+    "prefix": "otherwise",
+    "body": [
+      "otherwise oracle (${1:condition}) {",
+      "    $0",
+      "}"
+    ],
+    "description": "Else if (otherwise oracle)"
+  },
+  "For Loop": {
+    "prefix": "cycle",
+    "body": [
+      "cycle (morph ${1:i}: blade = ${2:0}; ${1:i} < ${3:count}; ${1:i}++) {",
+      "    $0",
+      "}"
+    ],
+    "description": "For loop (cycle)"
+  },
+  "While Loop": {
+    "prefix": "while",
+    "body": [
+      "while (${1:condition}) {",
+      "    $0",
+      "}"
+    ],
+    "description": "While loop"
+  },
+  "Infinite Loop": {
+    "prefix": "loop",
+    "body": [
+      "while (truth) {",
+      "    $0",
+      "}"
+    ],
+    "description": "Infinite while loop"
+  },
+  "Variable Declaration": {
+    "prefix": "morph",
+    "body": [
+      "morph ${1:name}: ${2:blade} = ${3:value}"
+    ],
+    "description": "Declare a mutable variable (morph)"
+  },
+  "Constant Declaration": {
+    "prefix": "eternal",
+    "body": [
+      "eternal ${1:NAME}: ${2:blade} = ${3:value}"
+    ],
+    "description": "Declare a constant (eternal)"
+  },
+  "Try/Catch": {
+    "prefix": "shield",
+    "body": [
+      "shield {",
+      "    $1",
+      "} deflect (${2:err}) {",
+      "    $0",
+      "}"
+    ],
+    "description": "Try/catch block (shield/deflect)"
+  },
+  "Try/Catch/Finally": {
+    "prefix": "shieldfull",
+    "body": [
+      "shield {",
+      "    $1",
+      "} deflect (${2:err}) {",
+      "    $3",
+      "} shatter {",
+      "    $0",
+      "}"
+    ],
+    "description": "Try/catch/finally (shield/deflect/shatter)"
+  },
+  "Import": {
+    "prefix": "summon",
+    "body": [
+      "summon ${1:Module} from \"${2:path}\""
+    ],
+    "description": "Import a module (summon)"
+  },
+  "Print": {
+    "prefix": "engrave",
+    "body": [
+      "engrave(\"${1:message}\")"
+    ],
+    "description": "Print to stdout (engrave)"
+  },
+  "Print with Newline": {
+    "prefix": "engraveln",
+    "body": [
+      "engrave(\"${1:message}\\n\")"
+    ],
+    "description": "Print with newline (engrave)"
+  },
+  "Print Variable": {
+    "prefix": "engravevar",
+    "body": [
+      "engrave(\"${1:label}: #{${2:variable}}\")"
+    ],
+    "description": "Print a variable with label"
+  },
+  "Lambda / Spell": {
+    "prefix": "spell",
+    "body": [
+      "spell (${1:params}) -> ${2:type} { ${3:body} }"
+    ],
+    "description": "Lambda expression (spell)"
+  },
+  "Spell Multiline": {
+    "prefix": "spellblock",
+    "body": [
+      "spell (${1:params}) -> ${2:type} {",
+      "    $0",
+      "}"
+    ],
+    "description": "Multi-line lambda expression (spell)"
+  },
+  "Return": {
+    "prefix": "unleash",
+    "body": [
+      "unleash ${1:value}"
+    ],
+    "description": "Return a value (unleash)"
+  },
+  "Constructor Call": {
+    "prefix": "conjure",
+    "body": [
+      "conjure ${1:Entity}(${2:args})"
+    ],
+    "description": "Create a new instance (conjure)"
+  },
+  "GPU Block": {
+    "prefix": "@gpu",
+    "body": [
+      "@gpu {",
+      "    morph idx: blade = thread_id",
+      "    oracle (idx < ${1:n}) {",
+      "        $0",
+      "    }",
+      "}"
+    ],
+    "description": "GPU compute block with thread_id"
+  },
+  "GPU Block 2D": {
+    "prefix": "@gpu2d",
+    "body": [
+      "@gpu {",
+      "    morph row: blade = thread_x",
+      "    morph col: blade = thread_y",
+      "    oracle (row < ${1:rows} && col < ${2:cols}) {",
+      "        $0",
+      "    }",
+      "}"
+    ],
+    "description": "GPU compute block with 2D thread indices"
+  },
+  "AI Block": {
+    "prefix": "@ai",
+    "body": [
+      "@ai {",
+      "    morph ${1:model} = conjure ${2:NeuralNetwork}(${3:config})",
+      "    $0",
+      "}"
+    ],
+    "description": "AI compute block"
+  },
+  "Arsenal Declaration": {
+    "prefix": "arsenal",
+    "body": [
+      "morph ${1:name}: arsenal[${2:blade}] = [${3}]"
+    ],
+    "description": "Declare an array (arsenal)"
+  },
+  "Arsenal Empty": {
+    "prefix": "arsenalempty",
+    "body": [
+      "morph ${1:name}: arsenal[${2:blade}] = []"
+    ],
+    "description": "Declare an empty array (arsenal)"
+  },
+  "Iterate Arsenal": {
+    "prefix": "arsenalfor",
+    "body": [
+      "cycle (morph ${1:i}: blade = 0; ${1:i} < ${2:arr}.length(); ${1:i}++) {",
+      "    morph ${3:item} = ${2:arr}[${1:i}]",
+      "    $0",
+      "}"
+    ],
+    "description": "Iterate over an arsenal with index"
+  },
+  "Blade Variable": {
+    "prefix": "mblade",
+    "body": [
+      "morph ${1:name}: blade = ${2:0}"
+    ],
+    "description": "Declare an integer variable"
+  },
+  "Spark Variable": {
+    "prefix": "mspark",
+    "body": [
+      "morph ${1:name}: spark = ${2:0.0}"
+    ],
+    "description": "Declare a float variable"
+  },
+  "Scroll Variable": {
+    "prefix": "mscroll",
+    "body": [
+      "morph ${1:name}: scroll = \"${2}\""
+    ],
+    "description": "Declare a string variable"
+  },
+  "Fate Variable": {
+    "prefix": "mfate",
+    "body": [
+      "morph ${1:name}: fate = ${2|truth,lies|}"
+    ],
+    "description": "Declare a boolean variable"
+  },
+  "Game Loop Template": {
+    "prefix": "gameloop",
+    "body": [
+      "summon Renderer from \"engine/renderer\"",
+      "summon Input from \"engine/input\"",
+      "summon Math from \"stdlib/math\"",
+      "",
+      "morph running: fate = truth",
+      "",
+      "forge update(dt: spark) {",
+      "    oracle (Input.is_key_down(\"Escape\")) {",
+      "        running = lies",
+      "    }",
+      "    $0",
+      "}",
+      "",
+      "forge draw(renderer: Renderer) {",
+      "    renderer.clear(0x001122FF)",
+      "}",
+      "",
+      "quest() {",
+      "    morph renderer: Renderer = conjure Renderer(${1:800}, ${2:600}, \"${3:Game}\")",
+      "    morph target_dt: spark = 1.0 / 60.0",
+      "",
+      "    while (running) {",
+      "        Input.poll()",
+      "        update(target_dt)",
+      "        draw(renderer)",
+      "        renderer.present()",
+      "        renderer.wait_frame(target_dt)",
+      "    }",
+      "}"
+    ],
+    "description": "Complete game loop template with renderer"
+  },
+  "Neural Network Template": {
+    "prefix": "neuralnet",
+    "body": [
+      "summon Math from \"stdlib/math\"",
+      "",
+      "entity Neuron {",
+      "    morph weights: arsenal[spark]",
+      "    morph bias: spark",
+      "    morph output: spark = 0.0",
+      "",
+      "    forge conjure(num_inputs: blade) {",
+      "        self.weights = []",
+      "        self.bias = Math.randomRange(-1.0, 1.0)",
+      "        cycle (morph i: blade = 0; i < num_inputs; i++) {",
+      "            self.weights.push(Math.randomRange(-1.0, 1.0))",
+      "        }",
+      "    }",
+      "",
+      "    forge activate(inputs: arsenal[spark]) -> spark {",
+      "        morph sum: spark = self.bias",
+      "        cycle (morph i: blade = 0; i < self.weights.length(); i++) {",
+      "            sum = sum + self.weights[i] * inputs[i]",
+      "        }",
+      "        self.output = 1.0 / (1.0 + Math.exp(-sum))",
+      "        unleash self.output",
+      "    }",
+      "}",
+      "",
+      "$0"
+    ],
+    "description": "Neural network neuron template"
+  },
+  "Match/Switch Pattern": {
+    "prefix": "morphswitch",
+    "body": [
+      "oracle (${1:value} == ${2:case1}) {",
+      "    $3",
+      "} otherwise oracle (${1:value} == ${4:case2}) {",
+      "    $5",
+      "} otherwise {",
+      "    $0",
+      "}"
+    ],
+    "description": "Switch-like pattern with oracle/otherwise"
+  },
+  "Pipe Chain": {
+    "prefix": "pipe",
+    "body": [
+      "${1:value} |> ${2:transform} |> ${3:output}"
+    ],
+    "description": "Pipe operator chain"
+  },
+  "File Header Comment": {
+    "prefix": "header",
+    "body": [
+      "~~ ${1:Description}",
+      "~~ Author: ${2:name}",
+      "~~ Created: ${CURRENT_YEAR}-${CURRENT_MONTH}-${CURRENT_DATE}",
+      ""
+    ],
+    "description": "File header comment block"
+  },
+  "Block Comment": {
+    "prefix": "blockcomment",
+    "body": [
+      "~*",
+      " * ${1:description}",
+      " * ${2}",
+      " *~"
+    ],
+    "description": "Multi-line block comment"
+  },
+  "Assert Pattern": {
+    "prefix": "assert",
+    "body": [
+      "oracle (!(${1:condition})) {",
+      "    engrave(\"Assertion failed: ${2:message}\")",
+      "    shatter",
+      "}"
+    ],
+    "description": "Assert-like pattern"
+  }
+}
