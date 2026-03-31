@@ -100,7 +100,7 @@ static inline XsValue xs_entity(XsEntity* e) {
 static inline XsValue xs_native_fn(XsNativeFn fn) {
     XsValue val;
     val.type = VAL_NATIVE_FN;
-    val.object = (void*)fn;
+    val.object = (void*)(uintptr_t)fn;
     return val;
 }
 
@@ -122,6 +122,10 @@ void       xs_entity_delete(XsEntity* e, const char* key);
 
 /* ===== Memory ===== */
 char* xs_strdup(const char* s);
+
+/* ===== VM native function registration (implemented in vm.c) ===== */
+/* VM is an opaque handle; stdlib modules use this to register natives. */
+void vm_register_native(VM* vm, const char* name, XsNativeFn fn);
 
 /* ===== Value to C type helpers ===== */
 static inline int64_t xs_as_blade(XsValue v)  { return v.blade;  }

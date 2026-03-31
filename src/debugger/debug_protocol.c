@@ -9,15 +9,15 @@
 #include <string.h>
 
 /* Simple JSON output helpers */
-static void json_start_object(FILE *out) { fprintf(out, "{"); }
-static void json_end_object(FILE *out)   { fprintf(out, "}"); }
-static void json_start_array(FILE *out)  { fprintf(out, "["); }
-static void json_end_array(FILE *out)    { fprintf(out, "]"); }
-static void json_key(FILE *out, const char *k) { fprintf(out, "\"%s\":", k); }
-static void json_string(FILE *out, const char *v) { fprintf(out, "\"%s\"", v); }
-static void json_int(FILE *out, int v) { fprintf(out, "%d", v); }
-static void json_bool(FILE *out, int v) { fprintf(out, "%s", v ? "true" : "false"); }
-static void json_comma(FILE *out) { fprintf(out, ","); }
+static void dap_json_start_object(FILE *out) { fprintf(out, "{"); }
+static void dap_json_end_object(FILE *out)   { fprintf(out, "}"); }
+static void dap_json_start_array(FILE *out)  { fprintf(out, "["); }
+static void dap_json_end_array(FILE *out)    { fprintf(out, "]"); }
+static void dap_json_key(FILE *out, const char *k) { fprintf(out, "\"%s\":", k); }
+static void dap_json_string(FILE *out, const char *v) { fprintf(out, "\"%s\"", v); }
+static void dap_json_int(FILE *out, int v) { fprintf(out, "%d", v); }
+static void dap_json_bool(FILE *out, int v) { fprintf(out, "%s", v ? "true" : "false"); }
+static void dap_json_comma(FILE *out) { fprintf(out, ","); }
 
 /* Send DAP message */
 static void dap_send(const char *body) {
@@ -52,7 +52,7 @@ static void dap_event(int seq, const char *event_name, const char *body_json) {
 }
 
 /* Read a DAP message from stdin */
-static int dap_read_message(char *buf, int buf_size) {
+static int dap_read_msg(char *buf, int buf_size) {
     /* Read Content-Length header */
     char header[256];
     int content_length = 0;
@@ -103,7 +103,7 @@ void xs_dap_run(XsDebugger *dbg) {
     bool running = true;
 
     while (running) {
-        if (dap_read_message(buf, sizeof(buf)) <= 0) break;
+        if (dap_read_msg(buf, sizeof(buf)) <= 0) break;
 
         char command[64] = {0};
         json_find_string(buf, "command", command, sizeof(command));
@@ -222,15 +222,15 @@ void xs_dap_run(XsDebugger *dbg) {
             dap_response(seq++, request_seq, command, false, NULL);
         }
 
-        (void)json_start_object;
-        (void)json_end_object;
-        (void)json_start_array;
-        (void)json_end_array;
-        (void)json_key;
-        (void)json_string;
-        (void)json_int;
-        (void)json_bool;
-        (void)json_comma;
+        (void)dap_json_start_object;
+        (void)dap_json_end_object;
+        (void)dap_json_start_array;
+        (void)dap_json_end_array;
+        (void)dap_json_key;
+        (void)dap_json_string;
+        (void)dap_json_int;
+        (void)dap_json_bool;
+        (void)dap_json_comma;
     }
 
     xs_debugger_stop(dbg);

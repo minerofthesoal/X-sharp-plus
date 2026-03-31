@@ -11,7 +11,8 @@ option(XS_BUILD_TESTS "Build test suite" OFF)
 option(XS_ENABLE_AUDIO "Enable audio subsystem" ON)
 
 # Compiler flags
-add_compile_options(-Wall -Wextra -Wpedantic)
+add_compile_options(-Wall -Wextra)
+add_compile_definitions(_GNU_SOURCE _POSIX_C_SOURCE=200809L)
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_compile_options(-g -O0)
 else()
@@ -72,7 +73,7 @@ if(XS_ENABLE_IDE)
         pkg_check_modules(GTKSV gtksourceview-3.0)
         if(GTK3_FOUND AND GTKSV_FOUND)
             file(GLOB_RECURSE IDE_SOURCES src/ide/**/*.c)
-            add_executable(xsharp-ide src/ide/core/ide_app.c ${IDE_SOURCES}
+            add_executable(xsharp-ide ${IDE_SOURCES}
                 ${CORE_SOURCES} ${STDLIB_SOURCES})
             target_include_directories(xsharp-ide PRIVATE
                 src/ stdlib/ ${GTK3_INCLUDE_DIRS} ${GTKSV_INCLUDE_DIRS})
@@ -98,7 +99,7 @@ endif()
 if(XS_BUILD_TESTS)
     enable_testing()
     file(GLOB_RECURSE TEST_SOURCES tests/**/*.c)
-    add_executable(xsharp-tests tests/test_main.c ${TEST_SOURCES}
+    add_executable(xsharp-tests ${TEST_SOURCES}
         ${CORE_SOURCES} ${STDLIB_SOURCES})
     target_include_directories(xsharp-tests PRIVATE src/ stdlib/ tests/)
     target_link_libraries(xsharp-tests m pthread)

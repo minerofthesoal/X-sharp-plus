@@ -1,6 +1,6 @@
 # X# (Xsharp) Build System
 CC      ?= gcc
-CFLAGS  ?= -std=c11 -Wall -Wextra -Wpedantic
+CFLAGS  ?= -std=c11 -Wall -Wextra -D_GNU_SOURCE -D_POSIX_C_SOURCE=200809L
 LDFLAGS ?= -lm -lpthread
 PREFIX  ?= /usr/local
 

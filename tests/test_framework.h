@@ -149,6 +149,27 @@ static const char *xs_current_test = "";
         }                                                       \
     } while (0)
 
+/* Assert with message (used by tests) */
+#define TEST_ASSERT(expr, msg)                                  \
+    do {                                                        \
+        if (!(expr)) {                                          \
+            TEST_FAIL(msg);                                     \
+            return;                                             \
+        }                                                       \
+    } while (0)
+
+/* Run a test function and track pass count */
+#define TEST_RUN(fn, pass_ptr)                                  \
+    do {                                                        \
+        TEST_CASE(#fn);                                         \
+        int _before = xs_test_fail_count;                       \
+        fn();                                                   \
+        if (xs_test_fail_count == _before) {                    \
+            TEST_PASS();                                        \
+            if (pass_ptr) (*(pass_ptr))++;                      \
+        }                                                       \
+    } while (0)
+
 /* Run a test function. Call TEST_CASE inside the function. */
 #define RUN_TEST(fn)                                            \
     do {                                                        \

@@ -446,7 +446,7 @@ VMResult vm_execute(VMState *vm, Chunk *chunk) {
             XsValue callee = vm_peek(vm, argc);
 
             if (callee.type == VAL_NATIVE_FN) {
-                XsNativeFn fn = (XsNativeFn)callee.object;
+                XsNativeFn fn = (XsNativeFn)(uintptr_t)callee.object;
                 XsValue *args = &vm->stack[vm->stack_top - argc];
                 XsValue result = fn(argc, args);
                 vm->stack_top -= argc + 1;
@@ -678,7 +678,7 @@ VMResult vm_execute(VMState *vm, Chunk *chunk) {
 VMResult vm_call(VMState *vm, int arg_count) {
     XsValue callee = vm_peek(vm, arg_count);
     if (callee.type == VAL_NATIVE_FN) {
-        XsNativeFn fn = (XsNativeFn)callee.object;
+        XsNativeFn fn = (XsNativeFn)(uintptr_t)callee.object;
         XsValue *args = &vm->stack[vm->stack_top - arg_count];
         XsValue result = fn(arg_count, args);
         vm->stack_top -= arg_count + 1;
@@ -717,4 +717,11 @@ void vm_gc_collect(VMState *vm) {
             obj = &(*obj)->next;
         }
     }
+}
+
+/* ===== vm_register_native: bridge for stdlib modules ===== */
+/* stdlib modules see VM as an opaque type (forward-declared in runtime.h).
+   This function casts VM* to VMState* and delegates to vm_register_native_fn. */
+void vm_register_native(VM *vm, const char *name, XsNativeFn fn) {
+    vm_register_native_fn((VMState *)vm, name, fn);
 }
