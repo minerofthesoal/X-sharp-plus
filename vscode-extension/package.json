@@ -1,0 +1,330 @@
+{
+  "name": "xsharp-lang",
+  "displayName": "X# (Xsharp)",
+  "description": "Full language support for X# (Xsharp) - syntax highlighting, IntelliSense, debugging, formatting, and linting",
+  "version": "0.1.0",
+  "publisher": "xsharp",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/xsharp/X-sharp-plus"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Themes",
+    "Snippets",
+    "Debuggers",
+    "Formatters",
+    "Linters"
+  ],
+  "keywords": [
+    "xsharp",
+    "x#",
+    "xs",
+    "programming language"
+  ],
+  "icon": "assets/xsharp-icon.png",
+  "activationEvents": [
+    "onLanguage:xsharp",
+    "workspaceContains:**/*.xs",
+    "onCommand:xsharp.run",
+    "onCommand:xsharp.build",
+    "onCommand:xsharp.debug",
+    "onCommand:xsharp.format",
+    "onCommand:xsharp.lint",
+    "onDebugResolve:xsharp"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "xsharp",
+        "aliases": [
+          "X#",
+          "Xsharp",
+          "xsharp"
+        ],
+        "extensions": [
+          ".xs"
+        ],
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "light": "./assets/xsharp-icon.png",
+          "dark": "./assets/xsharp-icon.png"
+        }
+      }
+    ],
+    "grammars": [
+      {
+        "language": "xsharp",
+        "scopeName": "source.xsharp",
+        "path": "./syntaxes/xsharp.tmLanguage.json"
+      }
+    ],
+    "themes": [
+      {
+        "label": "X# Obsidian",
+        "uiTheme": "vs-dark",
+        "path": "./themes/xsharp-dark.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "xsharp",
+        "path": "./snippets/xsharp.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "xsharp.run",
+        "title": "X#: Run Current File",
+        "icon": "$(play)"
+      },
+      {
+        "command": "xsharp.build",
+        "title": "X#: Build Project",
+        "icon": "$(tools)"
+      },
+      {
+        "command": "xsharp.debug",
+        "title": "X#: Debug Current File",
+        "icon": "$(debug-alt)"
+      },
+      {
+        "command": "xsharp.format",
+        "title": "X#: Format Document",
+        "icon": "$(symbol-structure)"
+      },
+      {
+        "command": "xsharp.lint",
+        "title": "X#: Lint Current File",
+        "icon": "$(checklist)"
+      }
+    ],
+    "configuration": {
+      "title": "X# (Xsharp)",
+      "properties": {
+        "xsharp.xsharpPath": {
+          "type": "string",
+          "default": "xsharp",
+          "description": "Path to the xsharp executable. Defaults to 'xsharp' on PATH."
+        },
+        "xsharp.enableLinting": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable real-time linting of X# files."
+        },
+        "xsharp.formatOnSave": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically format X# files on save."
+        },
+        "xsharp.lintOnSave": {
+          "type": "boolean",
+          "default": true,
+          "description": "Run linter when saving X# files."
+        },
+        "xsharp.buildArgs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Additional arguments passed to xsharp build."
+        },
+        "xsharp.runArgs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Additional arguments passed to xsharp run."
+        }
+      }
+    },
+    "debuggers": [
+      {
+        "type": "xsharp",
+        "label": "X# Debug",
+        "languages": [
+          "xsharp"
+        ],
+        "configurationAttributes": {
+          "launch": {
+            "required": [
+              "program"
+            ],
+            "properties": {
+              "program": {
+                "type": "string",
+                "description": "Path to the .xs file to debug.",
+                "default": "${file}"
+              },
+              "args": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Command-line arguments passed to the program.",
+                "default": []
+              },
+              "cwd": {
+                "type": "string",
+                "description": "Working directory for the debuggee.",
+                "default": "${workspaceFolder}"
+              },
+              "stopOnEntry": {
+                "type": "boolean",
+                "description": "Pause execution at the first line.",
+                "default": false
+              },
+              "env": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "description": "Environment variables for the debuggee.",
+                "default": {}
+              }
+            }
+          },
+          "attach": {
+            "required": [
+              "port"
+            ],
+            "properties": {
+              "port": {
+                "type": "number",
+                "description": "Debug adapter port to attach to.",
+                "default": 9229
+              },
+              "host": {
+                "type": "string",
+                "description": "Host of the debug adapter.",
+                "default": "localhost"
+              }
+            }
+          }
+        },
+        "configurationSnippets": [
+          {
+            "label": "X#: Launch",
+            "description": "Launch and debug an X# file",
+            "body": {
+              "type": "xsharp",
+              "request": "launch",
+              "name": "Launch X# Program",
+              "program": "${file}",
+              "cwd": "${workspaceFolder}",
+              "stopOnEntry": false
+            }
+          },
+          {
+            "label": "X#: Attach",
+            "description": "Attach to a running X# debug session",
+            "body": {
+              "type": "xsharp",
+              "request": "attach",
+              "name": "Attach to X#",
+              "port": 9229,
+              "host": "localhost"
+            }
+          }
+        ]
+      }
+    ],
+    "taskDefinitions": [
+      {
+        "type": "xsharp",
+        "required": [
+          "task"
+        ],
+        "properties": {
+          "task": {
+            "type": "string",
+            "enum": [
+              "build",
+              "run",
+              "test",
+              "lint",
+              "format"
+            ],
+            "description": "The X# task to execute."
+          },
+          "file": {
+            "type": "string",
+            "description": "The target file (defaults to current file)."
+          },
+          "args": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Additional arguments."
+          }
+        }
+      }
+    ],
+    "menus": {
+      "editor/title/run": [
+        {
+          "command": "xsharp.run",
+          "when": "resourceLangId == xsharp",
+          "group": "navigation@1"
+        },
+        {
+          "command": "xsharp.debug",
+          "when": "resourceLangId == xsharp",
+          "group": "navigation@2"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "xsharp.run",
+          "when": "resourceLangId == xsharp",
+          "group": "xsharp@1"
+        },
+        {
+          "command": "xsharp.format",
+          "when": "resourceLangId == xsharp",
+          "group": "xsharp@2"
+        },
+        {
+          "command": "xsharp.lint",
+          "when": "resourceLangId == xsharp",
+          "group": "xsharp@3"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "xsharp.run",
+        "key": "ctrl+shift+r",
+        "mac": "cmd+shift+r",
+        "when": "resourceLangId == xsharp"
+      },
+      {
+        "command": "xsharp.build",
+        "key": "ctrl+shift+b",
+        "mac": "cmd+shift+b",
+        "when": "resourceLangId == xsharp"
+      }
+    ]
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package",
+    "lint": "tsc --noEmit",
+    "prepackage": "npm run compile"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.0",
+    "@vscode/vsce": "^2.22.0"
+  }
+}

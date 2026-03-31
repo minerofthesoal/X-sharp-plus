@@ -1,0 +1,305 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "X# (Xsharp)",
+  "scopeName": "source.xsharp",
+  "fileTypes": [".xs"],
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#strings" },
+    { "include": "#numbers" },
+    { "include": "#decorators" },
+    { "include": "#keywords" },
+    { "include": "#types" },
+    { "include": "#constants" },
+    { "include": "#entity-definition" },
+    { "include": "#function-definition" },
+    { "include": "#function-call" },
+    { "include": "#operators" },
+    { "include": "#punctuation" },
+    { "include": "#variables" }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.double-tilde.xsharp",
+          "match": "~~.*$"
+        },
+        {
+          "name": "comment.block.xsharp",
+          "begin": "~\\*",
+          "end": "\\*~",
+          "patterns": [
+            {
+              "name": "comment.block.xsharp",
+              "match": "."
+            }
+          ]
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.xsharp",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "name": "constant.character.escape.xsharp",
+              "match": "\\\\[\\\\\"nrt0]"
+            },
+            {
+              "name": "meta.embedded.interpolation.xsharp",
+              "begin": "#\\{",
+              "end": "\\}",
+              "beginCaptures": {
+                "0": { "name": "punctuation.section.interpolation.begin.xsharp" }
+              },
+              "endCaptures": {
+                "0": { "name": "punctuation.section.interpolation.end.xsharp" }
+              },
+              "patterns": [
+                { "include": "source.xsharp" }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.single.xsharp",
+          "begin": "'",
+          "end": "'",
+          "patterns": [
+            {
+              "name": "constant.character.escape.xsharp",
+              "match": "\\\\[\\\\\'nrt0]"
+            }
+          ]
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "name": "constant.numeric.hex.xsharp",
+          "match": "\\b0x[0-9a-fA-F][0-9a-fA-F_]*\\b"
+        },
+        {
+          "name": "constant.numeric.binary.xsharp",
+          "match": "\\b0b[01][01_]*\\b"
+        },
+        {
+          "name": "constant.numeric.octal.xsharp",
+          "match": "\\b0o[0-7][0-7_]*\\b"
+        },
+        {
+          "name": "constant.numeric.float.xsharp",
+          "match": "\\b[0-9][0-9_]*\\.[0-9][0-9_]*([eE][+-]?[0-9]+)?\\b"
+        },
+        {
+          "name": "constant.numeric.integer.xsharp",
+          "match": "\\b[0-9][0-9_]*\\b"
+        }
+      ]
+    },
+    "decorators": {
+      "patterns": [
+        {
+          "name": "meta.decorator.xsharp",
+          "match": "@(gpu|ai|test|deprecated|inline|pure|async|cached|serialize)\\b",
+          "captures": {
+            "0": { "name": "entity.name.function.decorator.xsharp" }
+          }
+        },
+        {
+          "name": "meta.decorator.custom.xsharp",
+          "match": "@[a-zA-Z_][a-zA-Z0-9_]*",
+          "captures": {
+            "0": { "name": "entity.name.function.decorator.xsharp" }
+          }
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.xsharp",
+          "match": "\\b(oracle|otherwise|cycle|while|morph|eternal|unleash|conjure|shield|deflect|shatter|skip|shatter_cycle)\\b"
+        },
+        {
+          "name": "keyword.declaration.xsharp",
+          "match": "\\b(forge|entity|realm|quest|spell)\\b"
+        },
+        {
+          "name": "keyword.other.xsharp",
+          "match": "\\b(summon|engrave|from|extends|as|in)\\b"
+        }
+      ]
+    },
+    "types": {
+      "patterns": [
+        {
+          "name": "support.type.primitive.xsharp",
+          "match": "\\b(blade|spark|scroll|rune|fate|void|arsenal)\\b"
+        },
+        {
+          "name": "entity.name.type.xsharp",
+          "match": "\\b[A-Z][a-zA-Z0-9_]*\\b"
+        }
+      ]
+    },
+    "constants": {
+      "patterns": [
+        {
+          "name": "constant.language.boolean.true.xsharp",
+          "match": "\\b(truth)\\b"
+        },
+        {
+          "name": "constant.language.boolean.false.xsharp",
+          "match": "\\b(lies)\\b"
+        },
+        {
+          "name": "constant.language.null.xsharp",
+          "match": "\\b(abyss)\\b"
+        },
+        {
+          "name": "variable.language.this.xsharp",
+          "match": "\\b(self)\\b"
+        }
+      ]
+    },
+    "entity-definition": {
+      "patterns": [
+        {
+          "match": "\\b(entity)\\s+([A-Z][a-zA-Z0-9_]*)(?:\\s+(extends)\\s+([A-Z][a-zA-Z0-9_]*))?",
+          "captures": {
+            "1": { "name": "keyword.declaration.entity.xsharp" },
+            "2": { "name": "entity.name.type.class.xsharp" },
+            "3": { "name": "keyword.other.extends.xsharp" },
+            "4": { "name": "entity.other.inherited-class.xsharp" }
+          }
+        }
+      ]
+    },
+    "function-definition": {
+      "patterns": [
+        {
+          "match": "\\b(forge)\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\s*\\(",
+          "captures": {
+            "1": { "name": "keyword.declaration.function.xsharp" },
+            "2": { "name": "entity.name.function.xsharp" }
+          }
+        },
+        {
+          "match": "\\b(quest)\\s*\\(",
+          "captures": {
+            "1": { "name": "keyword.declaration.function.main.xsharp" }
+          }
+        }
+      ]
+    },
+    "function-call": {
+      "patterns": [
+        {
+          "match": "\\b([a-zA-Z_][a-zA-Z0-9_]*)\\s*(?=\\()",
+          "captures": {
+            "1": { "name": "entity.name.function.call.xsharp" }
+          }
+        },
+        {
+          "match": "\\.\\s*([a-zA-Z_][a-zA-Z0-9_]*)\\s*(?=\\()",
+          "captures": {
+            "1": { "name": "entity.name.function.member.xsharp" }
+          }
+        }
+      ]
+    },
+    "operators": {
+      "patterns": [
+        {
+          "name": "keyword.operator.pipe.xsharp",
+          "match": "\\|>"
+        },
+        {
+          "name": "keyword.operator.power.xsharp",
+          "match": "\\*\\*"
+        },
+        {
+          "name": "keyword.operator.arrow.xsharp",
+          "match": "->"
+        },
+        {
+          "name": "keyword.operator.comparison.xsharp",
+          "match": "==|!=|<=|>=|<|>"
+        },
+        {
+          "name": "keyword.operator.logical.xsharp",
+          "match": "&&|\\|\\||!"
+        },
+        {
+          "name": "keyword.operator.assignment.xsharp",
+          "match": "=|\\+=|-=|\\*=|/=|%=|\\*\\*="
+        },
+        {
+          "name": "keyword.operator.arithmetic.xsharp",
+          "match": "\\+|-|\\*|/|%"
+        },
+        {
+          "name": "keyword.operator.bitwise.xsharp",
+          "match": "&|\\||\\^|<<|>>"
+        }
+      ]
+    },
+    "punctuation": {
+      "patterns": [
+        {
+          "name": "punctuation.separator.comma.xsharp",
+          "match": ","
+        },
+        {
+          "name": "punctuation.terminator.semicolon.xsharp",
+          "match": ";"
+        },
+        {
+          "name": "punctuation.separator.colon.xsharp",
+          "match": ":"
+        },
+        {
+          "name": "punctuation.section.braces.begin.xsharp",
+          "match": "\\{"
+        },
+        {
+          "name": "punctuation.section.braces.end.xsharp",
+          "match": "\\}"
+        },
+        {
+          "name": "punctuation.section.brackets.begin.xsharp",
+          "match": "\\["
+        },
+        {
+          "name": "punctuation.section.brackets.end.xsharp",
+          "match": "\\]"
+        },
+        {
+          "name": "punctuation.section.parens.begin.xsharp",
+          "match": "\\("
+        },
+        {
+          "name": "punctuation.section.parens.end.xsharp",
+          "match": "\\)"
+        }
+      ]
+    },
+    "variables": {
+      "patterns": [
+        {
+          "match": "\\b(morph|eternal)\\s+([a-zA-Z_][a-zA-Z0-9_]*)",
+          "captures": {
+            "1": { "name": "keyword.control.xsharp" },
+            "2": { "name": "variable.other.xsharp" }
+          }
+        }
+      ]
+    }
+  }
+}
