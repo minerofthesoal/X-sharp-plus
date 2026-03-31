@@ -627,6 +627,5 @@ This project is licensed under the MIT License. See [LICENSE](LICENSE) for detai
 
 ## Acknowledgments
 
-X# is built with passion for game development and AI. Special thanks to the open-source community for the tools and libraries that make this possible.
-
+X# is built with Claude 
 **Happy forging!**
