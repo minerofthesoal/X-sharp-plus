@@ -348,7 +348,7 @@ int xs_shortcut_clean(void) {
     }
 }
 
-/* ===== @test: Find tests/*.xs and run each ===== */
+/* ===== @test: Find tests .xs files and run each ===== */
 int xs_shortcut_test(void) {
     printf("%s@test%s Running tests...\n", CLR_YELLOW, CLR_RESET);
 

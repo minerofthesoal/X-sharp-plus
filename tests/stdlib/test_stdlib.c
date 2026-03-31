@@ -50,19 +50,19 @@ static void test_math_clamp(void) {
 /* String tests */
 static void test_str_length(void) {
     XsValue args[] = { xs_scroll("hello") };
-    XsValue r = xs_str_length(1, args);
+    XsValue r = xs_string_length(1, args);
     TEST_ASSERT(r.type == VAL_BLADE && r.blade == 5, "length('hello') should be 5");
 }
 
 static void test_str_to_upper(void) {
     XsValue args[] = { xs_scroll("hello") };
-    XsValue r = xs_str_to_upper(1, args);
+    XsValue r = xs_string_toUpper(1, args);
     TEST_ASSERT(r.type == VAL_SCROLL && strcmp(r.scroll, "HELLO") == 0, "toUpper('hello') should be 'HELLO'");
 }
 
 static void test_str_contains(void) {
     XsValue args[] = { xs_scroll("hello world"), xs_scroll("world") };
-    XsValue r = xs_str_contains(2, args);
+    XsValue r = xs_string_contains(2, args);
     TEST_ASSERT(r.type == VAL_FATE && r.fate == true, "contains('hello world', 'world') should be true");
 }
 

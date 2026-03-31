@@ -14,7 +14,7 @@
 /* Helper: compile and run X# source, return VM result */
 static VMResult run_source(const char *source) {
     Lexer lexer;
-    lexer_init(&lexer, source, "<test>");
+    lexer_init(&lexer, source);
     Token tokens[4096];
     int count = 0;
     for (;;) {

@@ -13,6 +13,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <ctype.h>
+#include <stdarg.h>
 
 /* ===== ANSI Colors ===== */
 #define CLR_RESET   "\033[0m"

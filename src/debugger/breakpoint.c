@@ -5,6 +5,7 @@
  */
 
 #include "breakpoint.h"
+#include "debug_info.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>

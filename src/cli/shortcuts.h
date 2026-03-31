@@ -17,7 +17,7 @@ int xs_handle_shortcut(const char *name);
 int xs_shortcut_run(void);      /* find main.xs, run it */
 int xs_shortcut_build(void);    /* glob *.xs, compile all */
 int xs_shortcut_clean(void);    /* remove build/ directory */
-int xs_shortcut_test(void);     /* find tests/*.xs, run each */
+int xs_shortcut_test(void);     /* find tests .xs files, run each */
 int xs_shortcut_watch(void);    /* stat() loop, rebuild on change */
 int xs_shortcut_check(void);    /* lint all .xs files */
 int xs_shortcut_info(void);     /* print project info from .xsproj */
