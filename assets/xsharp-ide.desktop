@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=X# IDE
+Comment=Integrated Development Environment for X# (Xsharp) programming language
+Exec=xsharp-ide %F
+Icon=xsharp-ide
+Terminal=false
+Categories=Development;IDE;TextEditor;
+MimeType=text/x-xsharp;
+Keywords=xsharp;programming;ide;editor;
+StartupNotify=true

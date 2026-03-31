@@ -48,16 +48,20 @@ static void rc_out_byte(RangeEncoder *rc, uint8_t b) {
 }
 
 static void rc_shift_low(RangeEncoder *rc) {
-    if ((uint32_t)(rc->low) < 0xFF000000u || (rc->low >> 32) != 0) {
-        uint8_t temp = rc->cache;
-        do {
-            rc_out_byte(rc, (uint8_t)(temp + (uint8_t)(rc->low >> 32)));
-            temp = 0xFF;
-        } while (--rc->cache_size != 0);
+    uint8_t carry = (uint8_t)(rc->low >> 32);
+    if ((uint32_t)(rc->low) < 0xFF000000u || carry != 0) {
+        /* Flush cached bytes: first byte gets carry added, rest are 0xFF+carry */
+        rc_out_byte(rc, (uint8_t)(rc->cache + carry));
+        for (uint32_t i = 1; i < rc->cache_size; i++)
+            rc_out_byte(rc, (uint8_t)(0xFF + carry));
+        /* Start fresh cache with the new top byte */
         rc->cache = (uint8_t)((uint32_t)(rc->low) >> 24);
+        rc->cache_size = 1;
+    } else {
+        /* The top byte is 0xFF - defer because a future carry could propagate */
+        rc->cache_size++;
     }
-    rc->cache_size++;
-    rc->low = (uint32_t)(rc->low) << 8;
+    rc->low = ((uint32_t)(rc->low)) << 8;
 }
 
 void rc_encoder_init(RangeEncoder *rc) {
@@ -438,8 +442,8 @@ bool lzma_encode_block(LzmaEncoder *enc, const uint8_t *data, size_t size,
     /* Reset range coder output */
     enc->rc.out_size = 0;
 
-    /* Write initial byte for range coder */
-    rc_out_byte(&enc->rc, 0);
+    /* The range coder's initial cache byte (0x00) will be flushed naturally
+     * as the first output byte. The decoder skips it during initialization. */
 
     size_t pos = 0;
     while (pos < size) {
@@ -530,12 +534,14 @@ bool lzma_encode_block(LzmaEncoder *enc, const uint8_t *data, size_t size,
             /* Literal */
             rc_encode_bit(&enc->rc, &enc->is_match[enc->state][pos_state], 0);
 
-            /* Encode literal byte directly using 8 bits via fixed probability */
+            /* Encode literal byte using probability-modeled bits */
             uint8_t byte = data[pos];
+            Prob lit_probs[256];
+            prob_init(lit_probs, 256);
             uint32_t context = 1;
             for (int bit_idx = 7; bit_idx >= 0; bit_idx--) {
                 int bit = (byte >> bit_idx) & 1;
-                rc_encode_direct(&enc->rc, bit, 1);
+                rc_encode_bit(&enc->rc, &lit_probs[context], bit);
                 context = (context << 1) | bit;
             }
 
@@ -601,11 +607,15 @@ bool lzma_decode_block(LzmaDecoder *dec, const uint8_t *comp, size_t comp_size,
         uint32_t pos_state = (uint32_t)pos & (LZMA_NUM_POS_STATES - 1);
 
         if (rc_decode_bit(&dec->rd, &dec->is_match[dec->state][pos_state]) == 0) {
-            /* Literal */
+            /* Literal - decode using probability-modeled bits */
+            Prob lit_probs[256];
+            prob_init(lit_probs, 256);
             uint8_t byte = 0;
+            uint32_t context = 1;
             for (int bit_idx = 7; bit_idx >= 0; bit_idx--) {
-                uint32_t bit = rc_decode_direct(&dec->rd, 1);
+                int bit = rc_decode_bit(&dec->rd, &lit_probs[context]);
                 byte |= (uint8_t)(bit << bit_idx);
+                context = (context << 1) | bit;
             }
             out[pos] = byte;
             dec->window[dec->window_pos] = byte;

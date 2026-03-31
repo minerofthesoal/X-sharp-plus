@@ -4,6 +4,7 @@
  */
 
 #include "linter.h"
+#include <stdarg.h>
 #include "../lexer/lexer.h"
 #include "../parser/parser.h"
 #include "../ast/ast.h"

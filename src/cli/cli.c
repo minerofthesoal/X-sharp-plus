@@ -4,6 +4,7 @@
  */
 
 #include "cli.h"
+#include <stdarg.h>
 #include "repl.h"
 #include "formatter.h"
 #include "linter.h"
