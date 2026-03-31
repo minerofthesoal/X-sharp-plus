@@ -11,14 +11,14 @@
 
 #pragma once
 
-#include <QWidget>
+#include <QAction>
+#include <QColor>
 #include <QPlainTextEdit>
+#include <QString>
 #include <QTabWidget>
 #include <QVBoxLayout>
-#include <QString>
-#include <QColor>
 #include <QVector>
-#include <QAction>
+#include <QWidget>
 
 class XSharpHighlighter;
 class LineNumberArea;
@@ -28,16 +28,15 @@ class LineNumberArea;
  * A single QPlainTextEdit pane with a line-number gutter and
  * X# syntax highlighting.
  * =================================================================== */
-class XsCodeEditor : public QPlainTextEdit
-{
+class XsCodeEditor : public QPlainTextEdit {
     Q_OBJECT
 
-public:
-    explicit XsCodeEditor(QWidget *parent = nullptr);
+  public:
+    explicit XsCodeEditor(QWidget* parent = nullptr);
 
     /* Called by LineNumberArea to paint itself */
-    void lineNumberAreaPaintEvent(QPaintEvent *event);
-    int  lineNumberAreaWidth() const;
+    void lineNumberAreaPaintEvent(QPaintEvent* event);
+    int lineNumberAreaWidth() const;
 
     /* Settings */
     void setTabWidth(int spaces);
@@ -47,47 +46,46 @@ public:
     void applyObsidianTheme();
     void applyRadianceTheme();
 
-signals:
+  signals:
     void cursorPositionChanged(int line, int col);
 
-protected:
-    void resizeEvent(QResizeEvent *event) override;
-    void keyPressEvent(QKeyEvent *event) override;
+  protected:
+    void resizeEvent(QResizeEvent* event) override;
+    void keyPressEvent(QKeyEvent* event) override;
 
-private slots:
+  private slots:
     void updateLineNumberAreaWidth(int newBlockCount);
     void highlightCurrentLine();
-    void updateLineNumberArea(const QRect &rect, int dy);
+    void updateLineNumberArea(const QRect& rect, int dy);
     void onCursorPositionChanged();
 
-private:
-    QWidget             *m_lineNumberArea;
-    XSharpHighlighter   *m_highlighter;
+  private:
+    QWidget* m_lineNumberArea;
+    XSharpHighlighter* m_highlighter;
 
-    bool m_autoIndent       = true;
-    bool m_bracketMatching  = true;
-    bool m_highlightLine    = true;
-    int  m_tabWidth         = 4;
+    bool m_autoIndent = true;
+    bool m_bracketMatching = true;
+    bool m_highlightLine = true;
+    int m_tabWidth = 4;
 };
 
 /* ===================================================================
  * LineNumberArea
  * A thin widget painted alongside XsCodeEditor.
  * =================================================================== */
-class LineNumberArea : public QWidget
-{
+class LineNumberArea : public QWidget {
     Q_OBJECT
 
-public:
-    explicit LineNumberArea(XsCodeEditor *editor);
+  public:
+    explicit LineNumberArea(XsCodeEditor* editor);
 
     QSize sizeHint() const override;
 
-protected:
-    void paintEvent(QPaintEvent *event) override;
+  protected:
+    void paintEvent(QPaintEvent* event) override;
 
-private:
-    XsCodeEditor *m_codeEditor;
+  private:
+    XsCodeEditor* m_codeEditor;
 };
 
 /* ===================================================================
@@ -95,34 +93,35 @@ private:
  * Metadata associated with each open file tab.
  * =================================================================== */
 struct EditorTab {
-    XsCodeEditor *editor    = nullptr;
-    QString       filePath;           /* empty = untitled */
-    bool          modified  = false;
+    XsCodeEditor* editor = nullptr;
+    QString filePath; /* empty = untitled */
+    bool modified = false;
 };
 
 /* ===================================================================
  * XsEditor
  * Top-level editor widget containing a QTabWidget of EditorTabs.
  * =================================================================== */
-class XsEditor : public QWidget
-{
+class XsEditor : public QWidget {
     Q_OBJECT
 
-public:
-    explicit XsEditor(QWidget *parent = nullptr);
+  public:
+    explicit XsEditor(QWidget* parent = nullptr);
 
     /* Tab management */
-    int  newTab(const QString &filePath = QString());
-    bool openFile(const QString &filePath);
+    int newTab(const QString& filePath = QString());
+    bool openFile(const QString& filePath);
     bool saveCurrent();
-    bool saveAs(const QString &filePath);
+    bool saveAs(const QString& filePath);
     void closeCurrent();
     void closeTab(int index);
 
     /* Accessors */
-    QString     currentFilePath() const;
-    QString     currentText() const;
-    QTabWidget *tabWidget() const { return m_tabs; }
+    QString currentFilePath() const;
+    QString currentText() const;
+    QTabWidget* tabWidget() const {
+        return m_tabs;
+    }
 
     /* Editing actions */
     void undo();
@@ -139,30 +138,30 @@ public:
     void setBracketMatching(bool b);
     void setHighlightCurrentLine(bool b);
 
-signals:
+  signals:
     void cursorMoved(int line, int col);
-    void fileChanged(const QString &path);
+    void fileChanged(const QString& path);
     void modificationChanged(bool modified);
 
-private slots:
+  private slots:
     void onTabCloseRequested(int index);
     void onTabChanged(int index);
     void onEditorModified();
     void onCursorMoved(int line, int col);
 
-private:
-    QTabWidget          *m_tabs;
-    QVector<EditorTab>   m_tabData;
+  private:
+    QTabWidget* m_tabs;
+    QVector<EditorTab> m_tabData;
 
-    int     tabWidth             = 4;
-    bool    autoIndent           = true;
-    bool    bracketMatching      = true;
-    bool    highlightCurrentLine = true;
+    int tabWidth = 4;
+    bool autoIndent = true;
+    bool bracketMatching = true;
+    bool highlightCurrentLine = true;
 
-    XsCodeEditor *currentEditor() const;
-    EditorTab    *currentTabData();
-    void          updateTabTitle(int index);
-    bool          saveFile(int index, const QString &path);
-    QString       readFile(const QString &path);
-    bool          writeFile(const QString &path, const QString &text);
+    XsCodeEditor* currentEditor() const;
+    EditorTab* currentTabData();
+    void updateTabTitle(int index);
+    bool saveFile(int index, const QString& path);
+    QString readFile(const QString& path);
+    bool writeFile(const QString& path, const QString& text);
 };

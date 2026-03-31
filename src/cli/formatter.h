@@ -11,10 +11,10 @@
 
 /* Formatter configuration */
 typedef struct {
-    int  indent_width;      /* number of spaces/tabs per indent level (default 4) */
-    bool use_spaces;        /* true = spaces, false = tabs (default true) */
-    int  max_line_length;   /* soft wrap limit (default 100) */
-    bool insert_final_newline; /* ensure file ends with newline (default true) */
+    int indent_width;              /* number of spaces/tabs per indent level (default 4) */
+    bool use_spaces;               /* true = spaces, false = tabs (default true) */
+    int max_line_length;           /* soft wrap limit (default 100) */
+    bool insert_final_newline;     /* ensure file ends with newline (default true) */
     bool trim_trailing_whitespace; /* remove trailing spaces (default true) */
 } XsFormatConfig;
 
@@ -22,10 +22,10 @@ typedef struct {
 XsFormatConfig xs_format_config_default(void);
 
 /* Format a file in-place. Returns true on success. */
-bool xs_format_file(const char *path, const XsFormatConfig *config);
+bool xs_format_file(const char* path, const XsFormatConfig* config);
 
 /* Format source text and return a newly allocated formatted string.
  * Caller must free the result. Returns NULL on error. */
-char *xs_format_string(const char *source, const XsFormatConfig *config);
+char* xs_format_string(const char* source, const XsFormatConfig* config);
 
 #endif /* XSHARP_FORMATTER_H */

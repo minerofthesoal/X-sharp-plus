@@ -7,30 +7,27 @@
 
 #pragma once
 
-#include <QWidget>
-#include <QTreeWidget>
-#include <QVBoxLayout>
 #include <QHBoxLayout>
-#include <QPushButton>
 #include <QLabel>
+#include <QPushButton>
 #include <QSplitter>
 #include <QStringList>
+#include <QTreeWidget>
+#include <QVBoxLayout>
+#include <QWidget>
 
-class XsDebugPanel : public QWidget
-{
+class XsDebugPanel : public QWidget {
     Q_OBJECT
 
-public:
-    explicit XsDebugPanel(QWidget *parent = nullptr);
+  public:
+    explicit XsDebugPanel(QWidget* parent = nullptr);
 
     /* Update variable inspector */
-    void updateVariables(const QStringList &names,
-                         const QStringList &types,
-                         const QStringList &values);
+    void updateVariables(const QStringList& names, const QStringList& types,
+                         const QStringList& values);
 
     /* Update call stack view */
-    void updateCallStack(const QStringList &funcNames,
-                         const QStringList &locations);
+    void updateCallStack(const QStringList& funcNames, const QStringList& locations);
 
     /* Clear both views */
     void clearAll();
@@ -42,26 +39,26 @@ public:
     void applyObsidianTheme();
     void applyRadianceTheme();
 
-signals:
+  signals:
     void continueRequested();
     void stepInRequested();
     void stepOverRequested();
     void stepOutRequested();
     void stopRequested();
 
-private:
+  private:
     /* Toolbar buttons */
-    QPushButton *m_btnContinue;
-    QPushButton *m_btnStepIn;
-    QPushButton *m_btnStepOver;
-    QPushButton *m_btnStepOut;
-    QPushButton *m_btnStop;
+    QPushButton* m_btnContinue;
+    QPushButton* m_btnStepIn;
+    QPushButton* m_btnStepOver;
+    QPushButton* m_btnStepOut;
+    QPushButton* m_btnStop;
 
     /* Variable tree: Name | Type | Value */
-    QTreeWidget *m_varTree;
+    QTreeWidget* m_varTree;
 
     /* Call-stack tree: # | Function | Location */
-    QTreeWidget *m_stackTree;
+    QTreeWidget* m_stackTree;
 
     void setupUi();
     void applyStyleSheet(bool dark);

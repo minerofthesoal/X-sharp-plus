@@ -5,40 +5,41 @@
 
 #include "cli.h"
 #include <stdarg.h>
-#include "repl.h"
-#include "formatter.h"
-#include "linter.h"
-#include "shortcuts.h"
-#include "project_template.h"
+#include "../codegen/codegen.h"
+#include "../compiler/compiler.h"
+#include "../debugger/debugger.h"
+#include "../formats/xscsc.h"
+#include "../formats/xssc.h"
 #include "../lexer/lexer.h"
 #include "../parser/parser.h"
-#include "../compiler/compiler.h"
-#include "../codegen/codegen.h"
 #include "../vm/vm.h"
-#include "../debugger/debugger.h"
-#include "../formats/xssc.h"
-#include "../formats/xscsc.h"
+#include "formatter.h"
+#include "linter.h"
+#include "project_template.h"
+#include "repl.h"
+#include "shortcuts.h"
+#include <stdarg.h>
 
+#include <stdarg.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdbool.h>
-#include <stdarg.h>
 
 /* ===== ANSI Color Codes ===== */
-#define CLR_RESET   "\033[0m"
-#define CLR_RED     "\033[31m"
-#define CLR_GREEN   "\033[32m"
-#define CLR_YELLOW  "\033[33m"
-#define CLR_BLUE    "\033[34m"
+#define CLR_RESET "\033[0m"
+#define CLR_RED "\033[31m"
+#define CLR_GREEN "\033[32m"
+#define CLR_YELLOW "\033[33m"
+#define CLR_BLUE "\033[34m"
 #define CLR_MAGENTA "\033[35m"
-#define CLR_CYAN    "\033[36m"
-#define CLR_WHITE   "\033[37m"
-#define CLR_BOLD    "\033[1m"
-#define CLR_DIM     "\033[2m"
+#define CLR_CYAN "\033[36m"
+#define CLR_WHITE "\033[37m"
+#define CLR_BOLD "\033[1m"
+#define CLR_DIM "\033[2m"
 
 /* ===== Colored Output Helpers ===== */
-static void print_error(const char *fmt, ...) {
+static void print_error(const char* fmt, ...) {
     va_list args;
     fprintf(stderr, "%s%serror:%s ", CLR_BOLD, CLR_RED, CLR_RESET);
     va_start(args, fmt);
@@ -47,7 +48,7 @@ static void print_error(const char *fmt, ...) {
     fprintf(stderr, "\n");
 }
 
-static void print_success(const char *fmt, ...) {
+static void print_success(const char* fmt, ...) {
     va_list args;
     fprintf(stdout, "%s%ssuccess:%s ", CLR_BOLD, CLR_GREEN, CLR_RESET);
     va_start(args, fmt);
@@ -56,7 +57,7 @@ static void print_success(const char *fmt, ...) {
     fprintf(stdout, "\n");
 }
 
-static void print_info(const char *fmt, ...) {
+static void print_info(const char* fmt, ...) {
     va_list args;
     fprintf(stdout, "%s%sinfo:%s ", CLR_BOLD, CLR_CYAN, CLR_RESET);
     va_start(args, fmt);
@@ -65,7 +66,7 @@ static void print_info(const char *fmt, ...) {
     fprintf(stdout, "\n");
 }
 
-static void print_warning(const char *fmt, ...) {
+static void print_warning(const char* fmt, ...) {
     va_list args;
     fprintf(stderr, "%s%swarning:%s ", CLR_BOLD, CLR_YELLOW, CLR_RESET);
     va_start(args, fmt);
@@ -75,14 +76,13 @@ static void print_warning(const char *fmt, ...) {
 }
 
 /* ===== Version ===== */
-#define XS_VERSION_MAJOR  1
-#define XS_VERSION_MINOR  0
-#define XS_VERSION_PATCH  0
+#define XS_VERSION_MAJOR 1
+#define XS_VERSION_MINOR 0
+#define XS_VERSION_PATCH 0
 
 static void print_version(void) {
-    printf("%sX# (Xsharp)%s v%d.%d.%d\n",
-           CLR_BOLD, CLR_RESET,
-           XS_VERSION_MAJOR, XS_VERSION_MINOR, XS_VERSION_PATCH);
+    printf("%sX# (Xsharp)%s v%d.%d.%d\n", CLR_BOLD, CLR_RESET, XS_VERSION_MAJOR, XS_VERSION_MINOR,
+           XS_VERSION_PATCH);
 }
 
 /* ===== Usage / Help ===== */
@@ -126,8 +126,8 @@ static void print_usage(void) {
 }
 
 /* ===== File Reading Helper ===== */
-static char *read_file(const char *path) {
-    FILE *f = fopen(path, "rb");
+static char* read_file(const char* path) {
+    FILE* f = fopen(path, "rb");
     if (!f) {
         print_error("Cannot open file: %s", path);
         return NULL;
@@ -140,7 +140,7 @@ static char *read_file(const char *path) {
         print_error("Cannot determine file size: %s", path);
         return NULL;
     }
-    char *buf = (char *)malloc((size_t)size + 1);
+    char* buf = (char*)malloc((size_t)size + 1);
     if (!buf) {
         fclose(f);
         print_error("Out of memory reading file: %s", path);
@@ -153,8 +153,8 @@ static char *read_file(const char *path) {
 }
 
 /* ===== File Writing Helper ===== */
-static bool write_file(const char *path, const uint8_t *data, size_t size) {
-    FILE *f = fopen(path, "wb");
+static bool write_file(const char* path, const uint8_t* data, size_t size) {
+    FILE* f = fopen(path, "wb");
     if (!f) {
         print_error("Cannot open file for writing: %s", path);
         return false;
@@ -169,22 +169,23 @@ static bool write_file(const char *path, const uint8_t *data, size_t size) {
 }
 
 /* ===== Command: run ===== */
-static int cmd_run(int argc, char **argv) {
+static int cmd_run(int argc, char** argv) {
     if (argc < 1) {
         print_error("Usage: xs run <file.xs>");
         return 1;
     }
-    const char *path = argv[0];
+    const char* path = argv[0];
 
     /* Read the source file */
-    char *source = read_file(path);
-    if (!source) return 1;
+    char* source = read_file(path);
+    if (!source)
+        return 1;
 
     /* Lex */
     Lexer lexer;
     lexer_init(&lexer, source);
     int token_count = 0;
-    Token *tokens = lexer_tokenize_all(&lexer, &token_count);
+    Token* tokens = lexer_tokenize_all(&lexer, &token_count);
     if (lexer.had_error) {
         print_error("Lexer error: %s", lexer.error_msg);
         free(tokens);
@@ -195,7 +196,7 @@ static int cmd_run(int argc, char **argv) {
     /* Parse */
     Parser parser;
     parser_init(&parser, tokens, token_count);
-    AstNode *program = parser_parse_program(&parser);
+    AstNode* program = parser_parse_program(&parser);
     if (parser_had_error(&parser)) {
         print_error("Parse errors:");
         parser_print_errors(&parser);
@@ -240,12 +241,12 @@ static int cmd_run(int argc, char **argv) {
 }
 
 /* ===== Command: build ===== */
-static int cmd_build(int argc, char **argv) {
+static int cmd_build(int argc, char** argv) {
     if (argc < 1) {
         print_error("Usage: xs build <file.xs> [output.xsb]");
         return 1;
     }
-    const char *path = argv[0];
+    const char* path = argv[0];
 
     /* Determine output path */
     char out_path[512];
@@ -258,21 +259,22 @@ static int cmd_build(int argc, char **argv) {
         if (len > 3 && strcmp(out_path + len - 3, ".xs") == 0) {
             out_path[len - 2] = 'x';
             out_path[len - 1] = 's';
-            out_path[len]     = 'b';
+            out_path[len] = 'b';
             out_path[len + 1] = '\0';
         } else {
             strcat(out_path, ".xsb");
         }
     }
 
-    char *source = read_file(path);
-    if (!source) return 1;
+    char* source = read_file(path);
+    if (!source)
+        return 1;
 
     /* Lex */
     Lexer lexer;
     lexer_init(&lexer, source);
     int token_count = 0;
-    Token *tokens = lexer_tokenize_all(&lexer, &token_count);
+    Token* tokens = lexer_tokenize_all(&lexer, &token_count);
     if (lexer.had_error) {
         print_error("Lexer error: %s", lexer.error_msg);
         free(tokens);
@@ -283,7 +285,7 @@ static int cmd_build(int argc, char **argv) {
     /* Parse */
     Parser parser;
     parser_init(&parser, tokens, token_count);
-    AstNode *program = parser_parse_program(&parser);
+    AstNode* program = parser_parse_program(&parser);
     if (parser_had_error(&parser)) {
         print_error("Parse errors:");
         parser_print_errors(&parser);
@@ -327,21 +329,22 @@ static int cmd_build(int argc, char **argv) {
 }
 
 /* ===== Command: debug ===== */
-static int cmd_debug(int argc, char **argv) {
+static int cmd_debug(int argc, char** argv) {
     if (argc < 1) {
         print_error("Usage: xs debug <file.xs>");
         return 1;
     }
-    const char *path = argv[0];
+    const char* path = argv[0];
 
-    char *source = read_file(path);
-    if (!source) return 1;
+    char* source = read_file(path);
+    if (!source)
+        return 1;
 
     /* Lex */
     Lexer lexer;
     lexer_init(&lexer, source);
     int token_count = 0;
-    Token *tokens = lexer_tokenize_all(&lexer, &token_count);
+    Token* tokens = lexer_tokenize_all(&lexer, &token_count);
     if (lexer.had_error) {
         print_error("Lexer error: %s", lexer.error_msg);
         free(tokens);
@@ -352,7 +355,7 @@ static int cmd_debug(int argc, char **argv) {
     /* Parse */
     Parser parser;
     parser_init(&parser, tokens, token_count);
-    AstNode *program = parser_parse_program(&parser);
+    AstNode* program = parser_parse_program(&parser);
     if (parser_had_error(&parser)) {
         print_error("Parse errors:");
         parser_print_errors(&parser);
@@ -378,7 +381,7 @@ static int cmd_debug(int argc, char **argv) {
     }
 
     /* Create debug info */
-    XsDebugInfo *dbg_info = xs_debug_info_new("main", path);
+    XsDebugInfo* dbg_info = xs_debug_info_new("main", path);
     xs_debug_info_set_source(dbg_info, source);
 
     /* Build source map from chunk line info */
@@ -388,7 +391,7 @@ static int cmd_debug(int argc, char **argv) {
     }
 
     /* Create and launch debugger */
-    XsDebugger *dbg = xs_debugger_new();
+    XsDebugger* dbg = xs_debugger_new();
     dbg->stop_on_entry = true;
     xs_debugger_load(dbg, chunk.code, (size_t)chunk.code_count, dbg_info);
     xs_debugger_launch(dbg);
@@ -401,12 +404,15 @@ static int cmd_debug(int argc, char **argv) {
     while (dbg->state != DBG_STATE_STOPPED && dbg->state != DBG_STATE_ERROR) {
         printf("%sdbg>%s ", CLR_YELLOW, CLR_RESET);
         fflush(stdout);
-        if (!fgets(cmd_buf, sizeof(cmd_buf), stdin)) break;
+        if (!fgets(cmd_buf, sizeof(cmd_buf), stdin))
+            break;
 
         /* Remove trailing newline */
         size_t cmd_len = strlen(cmd_buf);
-        if (cmd_len > 0 && cmd_buf[cmd_len - 1] == '\n') cmd_buf[cmd_len - 1] = '\0';
-        if (cmd_buf[0] == '\0') continue;
+        if (cmd_len > 0 && cmd_buf[cmd_len - 1] == '\n')
+            cmd_buf[cmd_len - 1] = '\0';
+        if (cmd_buf[0] == '\0')
+            continue;
 
         /* Parse debug command */
         if (strcmp(cmd_buf, "help") == 0 || strcmp(cmd_buf, "h") == 0) {
@@ -438,7 +444,7 @@ static int cmd_debug(int argc, char **argv) {
             xs_debugger_step_out(dbg);
             printf("At %s:%d\n", dbg->current_file, dbg->current_line);
         } else if (strncmp(cmd_buf, "b ", 2) == 0 || strncmp(cmd_buf, "break ", 6) == 0) {
-            const char *arg = cmd_buf + (cmd_buf[0] == 'b' && cmd_buf[1] == ' ' ? 2 : 6);
+            const char* arg = cmd_buf + (cmd_buf[0] == 'b' && cmd_buf[1] == ' ' ? 2 : 6);
             int line = atoi(arg);
             if (line > 0) {
                 int bp_id = xs_debugger_set_breakpoint(dbg, path, line);
@@ -447,7 +453,7 @@ static int cmd_debug(int argc, char **argv) {
                 printf("Invalid line number\n");
             }
         } else if (strncmp(cmd_buf, "d ", 2) == 0 || strncmp(cmd_buf, "delete ", 7) == 0) {
-            const char *arg = cmd_buf + (cmd_buf[0] == 'd' && cmd_buf[1] == ' ' ? 2 : 7);
+            const char* arg = cmd_buf + (cmd_buf[0] == 'd' && cmd_buf[1] == ' ' ? 2 : 7);
             int bp_id = atoi(arg);
             if (xs_debugger_remove_breakpoint(dbg, bp_id)) {
                 printf("Breakpoint %d removed\n", bp_id);
@@ -462,35 +468,37 @@ static int cmd_debug(int argc, char **argv) {
             for (int i = 0; i < count; i++) {
                 char val_buf[256];
                 xs_debugger_value_to_string(vars[i].value, val_buf, sizeof(val_buf));
-                printf("  %s%s%s : %s = %s\n", CLR_CYAN, vars[i].name, CLR_RESET,
-                       vars[i].type_name, val_buf);
+                printf("  %s%s%s : %s = %s\n", CLR_CYAN, vars[i].name, CLR_RESET, vars[i].type_name,
+                       val_buf);
             }
-            if (count == 0) printf("  (no locals)\n");
+            if (count == 0)
+                printf("  (no locals)\n");
         } else if (strcmp(cmd_buf, "globals") == 0) {
             XsDbgVariable vars[64];
             int count = xs_debugger_get_globals(dbg, vars, 64);
             for (int i = 0; i < count; i++) {
                 char val_buf[256];
                 xs_debugger_value_to_string(vars[i].value, val_buf, sizeof(val_buf));
-                printf("  %s%s%s : %s = %s\n", CLR_CYAN, vars[i].name, CLR_RESET,
-                       vars[i].type_name, val_buf);
+                printf("  %s%s%s : %s = %s\n", CLR_CYAN, vars[i].name, CLR_RESET, vars[i].type_name,
+                       val_buf);
             }
-            if (count == 0) printf("  (no globals)\n");
+            if (count == 0)
+                printf("  (no globals)\n");
         } else if (strcmp(cmd_buf, "stack") == 0) {
             XsDbgCallFrame frames[64];
             int count = xs_debugger_get_call_stack(dbg, frames, 64);
             for (int i = 0; i < count; i++) {
-                printf("  #%d %s%s%s at %s:%d\n", frames[i].id,
-                       CLR_CYAN, frames[i].func_name, CLR_RESET,
-                       frames[i].source_file, frames[i].line);
+                printf("  #%d %s%s%s at %s:%d\n", frames[i].id, CLR_CYAN, frames[i].func_name,
+                       CLR_RESET, frames[i].source_file, frames[i].line);
             }
-            if (count == 0) printf("  (empty stack)\n");
+            if (count == 0)
+                printf("  (empty stack)\n");
         } else if (strncmp(cmd_buf, "w ", 2) == 0 || strncmp(cmd_buf, "watch ", 6) == 0) {
-            const char *expr = cmd_buf + (cmd_buf[0] == 'w' && cmd_buf[1] == ' ' ? 2 : 6);
+            const char* expr = cmd_buf + (cmd_buf[0] == 'w' && cmd_buf[1] == ' ' ? 2 : 6);
             int wid = xs_debugger_add_watch(dbg, expr);
             printf("Watch %d: %s\n", wid, expr);
         } else if (strncmp(cmd_buf, "p ", 2) == 0 || strncmp(cmd_buf, "print ", 6) == 0) {
-            const char *expr = cmd_buf + (cmd_buf[0] == 'p' && cmd_buf[1] == ' ' ? 2 : 6);
+            const char* expr = cmd_buf + (cmd_buf[0] == 'p' && cmd_buf[1] == ' ' ? 2 : 6);
             bool success = false;
             XsValue val = xs_debugger_evaluate(dbg, expr, 0, &success);
             if (success) {
@@ -522,14 +530,14 @@ static int cmd_debug(int argc, char **argv) {
 }
 
 /* ===== Command: repl ===== */
-static int cmd_repl(int argc, char **argv) {
+static int cmd_repl(int argc, char** argv) {
     (void)argc;
     (void)argv;
     return xs_repl_start();
 }
 
 /* ===== Command: fmt ===== */
-static int cmd_fmt(int argc, char **argv) {
+static int cmd_fmt(int argc, char** argv) {
     if (argc < 1) {
         print_error("Usage: xs fmt <file.xs> [file2.xs ...]");
         return 1;
@@ -548,7 +556,7 @@ static int cmd_fmt(int argc, char **argv) {
 }
 
 /* ===== Command: lint ===== */
-static int cmd_lint(int argc, char **argv) {
+static int cmd_lint(int argc, char** argv) {
     if (argc < 1) {
         print_error("Usage: xs lint <file.xs> [file2.xs ...]");
         return 1;
@@ -556,7 +564,7 @@ static int cmd_lint(int argc, char **argv) {
     int total_errors = 0;
     int total_warnings = 0;
     for (int i = 0; i < argc; i++) {
-        XsLintResult *result = xs_lint_file(argv[i]);
+        XsLintResult* result = xs_lint_file(argv[i]);
         if (result) {
             xs_lint_result_print(result);
             total_errors += result->error_count;
@@ -576,9 +584,9 @@ static int cmd_lint(int argc, char **argv) {
 }
 
 /* ===== Command: test ===== */
-static int cmd_test(int argc, char **argv) {
+static int cmd_test(int argc, char** argv) {
     /* If a directory given, use it; otherwise default to "tests/" */
-    const char *test_dir = (argc >= 1) ? argv[0] : "tests";
+    const char* test_dir = (argc >= 1) ? argv[0] : "tests";
     (void)test_dir;
 
     /* Delegate to the @test shortcut which has the full implementation */
@@ -586,14 +594,14 @@ static int cmd_test(int argc, char **argv) {
 }
 
 /* ===== Command: new ===== */
-static int cmd_new(int argc, char **argv) {
+static int cmd_new(int argc, char** argv) {
     if (argc < 1) {
         print_error("Usage: xs new <project-name> [template]");
         printf("Available templates: console, game, ai, library\n");
         return 1;
     }
-    const char *name = argv[0];
-    const char *tmpl = (argc >= 2) ? argv[1] : "console";
+    const char* name = argv[0];
+    const char* tmpl = (argc >= 2) ? argv[1] : "console";
     if (xs_create_project(name, tmpl)) {
         print_success("Created project '%s' with template '%s'", name, tmpl);
         return 0;
@@ -604,7 +612,7 @@ static int cmd_new(int argc, char **argv) {
 }
 
 /* ===== Command: init ===== */
-static int cmd_init(int argc, char **argv) {
+static int cmd_init(int argc, char** argv) {
     (void)argc;
     (void)argv;
     /* Create a .xsproj and main.xs in the current directory */
@@ -617,15 +625,15 @@ static int cmd_init(int argc, char **argv) {
 }
 
 /* ===== Command: pack ===== */
-static int cmd_pack(int argc, char **argv) {
+static int cmd_pack(int argc, char** argv) {
     if (argc < 2) {
         print_error("Usage: xs pack <directory> <output.Xssc>");
         return 1;
     }
-    const char *dir = argv[0];
-    const char *out = argv[1];
+    const char* dir = argv[0];
+    const char* out = argv[1];
 
-    XsscArchive *archive = xssc_create();
+    XsscArchive* archive = xssc_create();
     if (!archive) {
         print_error("Failed to create archive");
         return 1;
@@ -634,25 +642,27 @@ static int cmd_pack(int argc, char **argv) {
     xssc_set_metadata(archive, "creator", "xs-cli");
     xssc_set_metadata(archive, "version", "1.0.0");
 
-    /* Walk directory and add .xs files */
-    /* Simple approach: use opendir/readdir */
-    #include <dirent.h>
-    DIR *d = opendir(dir);
+/* Walk directory and add .xs files */
+/* Simple approach: use opendir/readdir */
+#include <dirent.h>
+    DIR* d = opendir(dir);
     if (!d) {
         print_error("Cannot open directory: %s", dir);
         xssc_free(archive);
         return 1;
     }
-    struct dirent *ent;
+    struct dirent* ent;
     int file_count = 0;
     while ((ent = readdir(d)) != NULL) {
-        if (ent->d_name[0] == '.') continue;
+        if (ent->d_name[0] == '.')
+            continue;
         size_t nlen = strlen(ent->d_name);
         if (nlen > 3 && strcmp(ent->d_name + nlen - 3, ".xs") == 0) {
             char full_path[1024];
             snprintf(full_path, sizeof(full_path), "%s/%s", dir, ent->d_name);
             int idx = xssc_add_file(archive, full_path, ent->d_name, XSSC_ENTRY_SOURCE);
-            if (idx >= 0) file_count++;
+            if (idx >= 0)
+                file_count++;
         }
     }
     closedir(d);
@@ -674,15 +684,15 @@ static int cmd_pack(int argc, char **argv) {
 }
 
 /* ===== Command: unpack ===== */
-static int cmd_unpack(int argc, char **argv) {
+static int cmd_unpack(int argc, char** argv) {
     if (argc < 2) {
         print_error("Usage: xs unpack <archive.Xssc> <output-dir>");
         return 1;
     }
-    const char *archive_path = argv[0];
-    const char *out_dir = argv[1];
+    const char* archive_path = argv[0];
+    const char* out_dir = argv[1];
 
-    XsscArchive *archive = xssc_read(archive_path);
+    XsscArchive* archive = xssc_read(archive_path);
     if (!archive) {
         print_error("Failed to read archive: %s", archive_path);
         return 1;
@@ -701,12 +711,12 @@ static int cmd_unpack(int argc, char **argv) {
 }
 
 /* ===== Command: compress ===== */
-static int cmd_compress(int argc, char **argv) {
+static int cmd_compress(int argc, char** argv) {
     if (argc < 1) {
         print_error("Usage: xs compress <archive.Xssc> [output.Xscsc]");
         return 1;
     }
-    const char *in_path = argv[0];
+    const char* in_path = argv[0];
 
     char out_path[512];
     if (argc >= 2) {
@@ -720,20 +730,20 @@ static int cmd_compress(int argc, char **argv) {
             out_path[len - 3] = 's';
             out_path[len - 2] = 'c';
             out_path[len - 1] = 's';
-            out_path[len]     = 'c';
+            out_path[len] = 'c';
             out_path[len + 1] = '\0';
         } else {
             strcat(out_path, ".Xscsc");
         }
     }
 
-    XsscArchive *xssc = xssc_read(in_path);
+    XsscArchive* xssc = xssc_read(in_path);
     if (!xssc) {
         print_error("Failed to read archive: %s", in_path);
         return 1;
     }
 
-    XscscArchive *xscsc = xscsc_compress(xssc, LZMA2_DEFAULT_LEVEL);
+    XscscArchive* xscsc = xscsc_compress(xssc, LZMA2_DEFAULT_LEVEL);
     if (!xscsc) {
         print_error("Compression failed");
         xssc_free(xssc);
@@ -747,11 +757,10 @@ static int cmd_compress(int argc, char **argv) {
         return 1;
     }
 
-    print_success("Compressed %s -> %s (%.1f%% ratio)",
-                  in_path, out_path,
+    print_success("Compressed %s -> %s (%.1f%% ratio)", in_path, out_path,
                   xscsc->uncompressed_size > 0
-                    ? (100.0 * (double)xscsc->compressed_size / (double)xscsc->uncompressed_size)
-                    : 0.0);
+                      ? (100.0 * (double)xscsc->compressed_size / (double)xscsc->uncompressed_size)
+                      : 0.0);
 
     xscsc_free(xscsc);
     xssc_free(xssc);
@@ -759,12 +768,12 @@ static int cmd_compress(int argc, char **argv) {
 }
 
 /* ===== Command: decompress ===== */
-static int cmd_decompress(int argc, char **argv) {
+static int cmd_decompress(int argc, char** argv) {
     if (argc < 1) {
         print_error("Usage: xs decompress <archive.Xscsc> [output.Xssc]");
         return 1;
     }
-    const char *in_path = argv[0];
+    const char* in_path = argv[0];
 
     char out_path[512];
     if (argc >= 2) {
@@ -781,13 +790,13 @@ static int cmd_decompress(int argc, char **argv) {
         }
     }
 
-    XscscArchive *xscsc = xscsc_read(in_path);
+    XscscArchive* xscsc = xscsc_read(in_path);
     if (!xscsc) {
         print_error("Failed to read compressed archive: %s", in_path);
         return 1;
     }
 
-    XsscArchive *xssc = xscsc_decompress(xscsc);
+    XsscArchive* xssc = xscsc_decompress(xscsc);
     if (!xssc) {
         print_error("Decompression failed");
         xscsc_free(xscsc);
@@ -809,13 +818,13 @@ static int cmd_decompress(int argc, char **argv) {
 }
 
 /* ===== Main Dispatch ===== */
-int xs_cli_dispatch(int argc, char **argv) {
+int xs_cli_dispatch(int argc, char** argv) {
     if (argc < 2) {
         print_usage();
         return 0;
     }
 
-    const char *cmd = argv[1];
+    const char* cmd = argv[1];
 
     /* Check for flags first */
     if (strcmp(cmd, "-h") == 0 || strcmp(cmd, "--help") == 0) {
@@ -837,7 +846,7 @@ int xs_cli_dispatch(int argc, char **argv) {
 
     int result = 0;
     int sub_argc = argc - 2;
-    char **sub_argv = argv + 2;
+    char** sub_argv = argv + 2;
 
     if (strcmp(cmd, "run") == 0) {
         result = cmd_run(sub_argc, sub_argv);

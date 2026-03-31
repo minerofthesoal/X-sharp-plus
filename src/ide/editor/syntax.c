@@ -12,7 +12,7 @@
 #include <sys/stat.h>
 
 /* Embedded X# language definition in GtkSourceView XML format */
-static const char *XS_LANG_XML =
+static const char* XS_LANG_XML =
     "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
     "<language id=\"xsharp\" name=\"X#\" version=\"2.0\" _section=\"Source\">\n"
     "  <metadata>\n"
@@ -40,7 +40,8 @@ static const char *XS_LANG_XML =
     "\n"
     "  <definitions>\n"
     "    <!-- Line comment -->\n"
-    "    <context id=\"line-comment\" style-ref=\"comment\" end-at-line-end=\"true\" class=\"comment\">\n"
+    "    <context id=\"line-comment\" style-ref=\"comment\" end-at-line-end=\"true\" "
+    "class=\"comment\">\n"
     "      <start>//</start>\n"
     "    </context>\n"
     "\n"
@@ -155,7 +156,10 @@ static const char *XS_LANG_XML =
     "\n"
     "    <!-- Operators -->\n"
     "    <context id=\"operators\" style-ref=\"operator\">\n"
-    "      <match>[+\\-*/%=!&lt;&gt;&amp;|^~?:]+|\\|&gt;|-&gt;|=&gt;|\\.\\.\\.|\\.\\.|\\.|(\\+\\+|--)|(\\*\\*)</match>\n"
+    "      "
+    "<match>[+\\-*/"
+    "%=!&lt;&gt;&amp;|^~?:]+|\\|&gt;|-&gt;|=&gt;|\\.\\.\\.|\\.\\.|\\.|(\\+\\+|--)|(\\*\\*)</"
+    "match>\n"
     "    </context>\n"
     "\n"
     "    <!-- Main context -->\n"
@@ -184,12 +188,14 @@ static const char *XS_LANG_XML =
     "</language>\n";
 
 /* Write the embedded XML to a temp file and add its directory to the search path */
-void xs_syntax_init(GtkSourceLanguageManager *manager) {
-    if (!manager) return;
+void xs_syntax_init(GtkSourceLanguageManager* manager) {
+    if (!manager)
+        return;
 
     /* Write language definition to a config directory */
-    const char *home = getenv("HOME");
-    if (!home) home = "/tmp";
+    const char* home = getenv("HOME");
+    if (!home)
+        home = "/tmp";
 
     char dir[1024];
     snprintf(dir, sizeof(dir), "%s/.local/share/gtksourceview-3.0/language-specs", home);
@@ -203,31 +209,33 @@ void xs_syntax_init(GtkSourceLanguageManager *manager) {
     char path[1100];
     snprintf(path, sizeof(path), "%s/xsharp.lang", dir);
 
-    FILE *f = fopen(path, "w");
+    FILE* f = fopen(path, "w");
     if (f) {
         fputs(XS_LANG_XML, f);
         fclose(f);
     }
 
     /* Add the directory to the language manager search path */
-    const gchar * const *current_paths = gtk_source_language_manager_get_search_path(manager);
+    const gchar* const* current_paths = gtk_source_language_manager_get_search_path(manager);
     int count = 0;
     if (current_paths) {
-        while (current_paths[count]) count++;
+        while (current_paths[count])
+            count++;
     }
 
-    const gchar **new_paths = (const gchar **)g_malloc0(sizeof(gchar *) * (count + 2));
+    const gchar** new_paths = (const gchar**)g_malloc0(sizeof(gchar*) * (count + 2));
     new_paths[0] = dir;
     for (int i = 0; i < count; i++) {
         new_paths[i + 1] = current_paths[i];
     }
     new_paths[count + 1] = NULL;
 
-    gtk_source_language_manager_set_search_path(manager, (gchar **)new_paths);
+    gtk_source_language_manager_set_search_path(manager, (gchar**)new_paths);
     g_free(new_paths);
 }
 
-GtkSourceLanguage *xs_syntax_get_language(GtkSourceLanguageManager *manager) {
-    if (!manager) return NULL;
+GtkSourceLanguage* xs_syntax_get_language(GtkSourceLanguageManager* manager) {
+    if (!manager)
+        return NULL;
     return gtk_source_language_manager_get_language(manager, "xsharp");
 }

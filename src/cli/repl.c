@@ -4,50 +4,50 @@
  */
 
 #include "repl.h"
+#include "../codegen/codegen.h"
+#include "../compiler/compiler.h"
 #include "../lexer/lexer.h"
 #include "../parser/parser.h"
-#include "../compiler/compiler.h"
-#include "../codegen/codegen.h"
-#include "../vm/vm.h"
 #include "../runtime/runtime.h"
+#include "../vm/vm.h"
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdbool.h>
 
 /* Try to use readline if available */
 #ifdef HAVE_READLINE
-#include <readline/readline.h>
 #include <readline/history.h>
+#include <readline/readline.h>
 #define REPL_USE_READLINE 1
 #else
 #define REPL_USE_READLINE 0
 #endif
 
 /* ===== ANSI Colors ===== */
-#define CLR_RESET   "\033[0m"
-#define CLR_RED     "\033[31m"
-#define CLR_GREEN   "\033[32m"
-#define CLR_YELLOW  "\033[33m"
-#define CLR_BLUE    "\033[34m"
-#define CLR_CYAN    "\033[36m"
-#define CLR_BOLD    "\033[1m"
-#define CLR_DIM     "\033[2m"
+#define CLR_RESET "\033[0m"
+#define CLR_RED "\033[31m"
+#define CLR_GREEN "\033[32m"
+#define CLR_YELLOW "\033[33m"
+#define CLR_BLUE "\033[34m"
+#define CLR_CYAN "\033[36m"
+#define CLR_BOLD "\033[1m"
+#define CLR_DIM "\033[2m"
 
 /* ===== REPL State ===== */
 static VMState repl_vm;
-static bool    repl_vm_initialized = false;
-static char   *repl_history[REPL_MAX_HISTORY];
-static int     repl_history_count = 0;
+static bool repl_vm_initialized = false;
+static char* repl_history[REPL_MAX_HISTORY];
+static int repl_history_count = 0;
 
 /* ===== History Management ===== */
-static void history_add(const char *line) {
+static void history_add(const char* line) {
     if (repl_history_count < REPL_MAX_HISTORY) {
         repl_history[repl_history_count++] = strdup(line);
     } else {
         free(repl_history[0]);
-        memmove(repl_history, repl_history + 1, (REPL_MAX_HISTORY - 1) * sizeof(char *));
+        memmove(repl_history, repl_history + 1, (REPL_MAX_HISTORY - 1) * sizeof(char*));
         repl_history[REPL_MAX_HISTORY - 1] = strdup(line);
     }
 #if REPL_USE_READLINE
@@ -64,31 +64,34 @@ static void history_free(void) {
 }
 
 /* ===== Line Reading ===== */
-static char *read_line(const char *prompt) {
+static char* read_line(const char* prompt) {
 #if REPL_USE_READLINE
-    char *line = readline(prompt);
+    char* line = readline(prompt);
     return line; /* caller frees; NULL on EOF */
 #else
     static char buf[REPL_MAX_LINE];
     printf("%s", prompt);
     fflush(stdout);
-    if (!fgets(buf, sizeof(buf), stdin)) return NULL;
+    if (!fgets(buf, sizeof(buf), stdin))
+        return NULL;
     /* Strip trailing newline */
     size_t len = strlen(buf);
-    if (len > 0 && buf[len - 1] == '\n') buf[len - 1] = '\0';
+    if (len > 0 && buf[len - 1] == '\n')
+        buf[len - 1] = '\0';
     return strdup(buf);
 #endif
 }
 
 /* ===== Brace Counting for Multi-line Input ===== */
-static int count_unmatched_braces(const char *text) {
+static int count_unmatched_braces(const char* text) {
     int depth = 0;
     bool in_string = false;
     bool in_comment = false;
     char prev = 0;
-    for (const char *p = text; *p; p++) {
+    for (const char* p = text; *p; p++) {
         if (in_comment) {
-            if (*p == '\n') in_comment = false;
+            if (*p == '\n')
+                in_comment = false;
             continue;
         }
         if (*p == '/' && *(p + 1) == '/') {
@@ -101,8 +104,10 @@ static int count_unmatched_braces(const char *text) {
             continue;
         }
         if (!in_string) {
-            if (*p == '{') depth++;
-            else if (*p == '}') depth--;
+            if (*p == '{')
+                depth++;
+            else if (*p == '}')
+                depth--;
         }
         prev = *p;
     }
@@ -110,7 +115,7 @@ static int count_unmatched_braces(const char *text) {
 }
 
 /* ===== Meta-command Handling ===== */
-static bool handle_meta_command(const char *line) {
+static bool handle_meta_command(const char* line) {
     if (strcmp(line, ".help") == 0) {
         printf("%sMeta-commands:%s\n", CLR_BOLD, CLR_RESET);
         printf("  .help       Show this help\n");
@@ -133,8 +138,9 @@ static bool handle_meta_command(const char *line) {
         return false; /* signal to exit; handled by caller */
     }
     if (strncmp(line, ".load ", 6) == 0) {
-        const char *path = line + 6;
-        while (*path == ' ') path++;
+        const char* path = line + 6;
+        while (*path == ' ')
+            path++;
         if (xs_repl_load_file(path)) {
             printf("%sLoaded:%s %s\n", CLR_GREEN, CLR_RESET, path);
         } else {
@@ -143,8 +149,9 @@ static bool handle_meta_command(const char *line) {
         return true;
     }
     if (strncmp(line, ".save ", 6) == 0) {
-        const char *path = line + 6;
-        while (*path == ' ') path++;
+        const char* path = line + 6;
+        while (*path == ' ')
+            path++;
         if (xs_repl_save_history(path)) {
             printf("%sSaved:%s History written to %s\n", CLR_GREEN, CLR_RESET, path);
         } else {
@@ -174,38 +181,38 @@ static bool handle_meta_command(const char *line) {
 /* ===== Print an XsValue ===== */
 static void print_value(XsValue val) {
     switch (val.type) {
-        case VAL_BLADE:
-            printf("%s%lld%s", CLR_CYAN, (long long)val.blade, CLR_RESET);
-            break;
-        case VAL_SPARK:
-            printf("%s%g%s", CLR_CYAN, val.spark, CLR_RESET);
-            break;
-        case VAL_SCROLL:
-            printf("%s\"%s\"%s", CLR_GREEN, val.scroll ? val.scroll : "(null)", CLR_RESET);
-            break;
-        case VAL_FATE:
-            printf("%s%s%s", CLR_YELLOW, val.fate ? "truth" : "lies", CLR_RESET);
-            break;
-        case VAL_ABYSS:
-            printf("%sabyss%s", CLR_DIM, CLR_RESET);
-            break;
-        case VAL_ARSENAL:
-            printf("[arsenal]");
-            break;
-        case VAL_ENTITY:
-            printf("{entity}");
-            break;
-        case VAL_SPELL:
-            printf("<spell>");
-            break;
-        case VAL_NATIVE_FN:
-            printf("<native fn>");
-            break;
+    case VAL_BLADE:
+        printf("%s%lld%s", CLR_CYAN, (long long)val.blade, CLR_RESET);
+        break;
+    case VAL_SPARK:
+        printf("%s%g%s", CLR_CYAN, val.spark, CLR_RESET);
+        break;
+    case VAL_SCROLL:
+        printf("%s\"%s\"%s", CLR_GREEN, val.scroll ? val.scroll : "(null)", CLR_RESET);
+        break;
+    case VAL_FATE:
+        printf("%s%s%s", CLR_YELLOW, val.fate ? "truth" : "lies", CLR_RESET);
+        break;
+    case VAL_ABYSS:
+        printf("%sabyss%s", CLR_DIM, CLR_RESET);
+        break;
+    case VAL_ARSENAL:
+        printf("[arsenal]");
+        break;
+    case VAL_ENTITY:
+        printf("{entity}");
+        break;
+    case VAL_SPELL:
+        printf("<spell>");
+        break;
+    case VAL_NATIVE_FN:
+        printf("<native fn>");
+        break;
     }
 }
 
 /* ===== Execute a Single Input ===== */
-bool xs_repl_execute_line(const char *line) {
+bool xs_repl_execute_line(const char* line) {
     if (!repl_vm_initialized) {
         vm_init(&repl_vm);
         repl_vm_initialized = true;
@@ -215,7 +222,7 @@ bool xs_repl_execute_line(const char *line) {
     Lexer lexer;
     lexer_init(&lexer, line);
     int token_count = 0;
-    Token *tokens = lexer_tokenize_all(&lexer, &token_count);
+    Token* tokens = lexer_tokenize_all(&lexer, &token_count);
     if (lexer.had_error) {
         fprintf(stderr, "%sLexer error:%s %s\n", CLR_RED, CLR_RESET, lexer.error_msg);
         free(tokens);
@@ -225,20 +232,18 @@ bool xs_repl_execute_line(const char *line) {
     /* Parse: try as expression first, fall back to program */
     Parser parser;
     parser_init(&parser, tokens, token_count);
-    AstNode *ast = NULL;
+    AstNode* ast = NULL;
     bool is_expr = false;
 
     /* Heuristic: if it starts with a keyword that is a statement/decl, parse as program */
     bool starts_with_stmt = false;
     if (token_count > 0) {
         TokenType first = tokens[0].type;
-        starts_with_stmt = (first == TOK_MORPH || first == TOK_ETERNAL ||
-                           first == TOK_FORGE || first == TOK_ENTITY ||
-                           first == TOK_ORACLE || first == TOK_CYCLE ||
-                           first == TOK_WHILE || first == TOK_UNLEASH ||
-                           first == TOK_ENGRAVE || first == TOK_SHIELD ||
-                           first == TOK_SUMMON || first == TOK_REALM ||
-                           first == TOK_QUEST);
+        starts_with_stmt = (first == TOK_MORPH || first == TOK_ETERNAL || first == TOK_FORGE ||
+                            first == TOK_ENTITY || first == TOK_ORACLE || first == TOK_CYCLE ||
+                            first == TOK_WHILE || first == TOK_UNLEASH || first == TOK_ENGRAVE ||
+                            first == TOK_SHIELD || first == TOK_SUMMON || first == TOK_REALM ||
+                            first == TOK_QUEST);
     }
 
     if (!starts_with_stmt) {
@@ -314,16 +319,20 @@ bool xs_repl_execute_line(const char *line) {
 }
 
 /* ===== Load and Execute a File ===== */
-bool xs_repl_load_file(const char *path) {
-    FILE *f = fopen(path, "r");
-    if (!f) return false;
+bool xs_repl_load_file(const char* path) {
+    FILE* f = fopen(path, "r");
+    if (!f)
+        return false;
 
     fseek(f, 0, SEEK_END);
     long size = ftell(f);
     fseek(f, 0, SEEK_SET);
 
-    char *buf = (char *)malloc((size_t)size + 1);
-    if (!buf) { fclose(f); return false; }
+    char* buf = (char*)malloc((size_t)size + 1);
+    if (!buf) {
+        fclose(f);
+        return false;
+    }
 
     size_t nread = fread(buf, 1, (size_t)size, f);
     buf[nread] = '\0';
@@ -335,9 +344,10 @@ bool xs_repl_load_file(const char *path) {
 }
 
 /* ===== Save History ===== */
-bool xs_repl_save_history(const char *path) {
-    FILE *f = fopen(path, "w");
-    if (!f) return false;
+bool xs_repl_save_history(const char* path) {
+    FILE* f = fopen(path, "w");
+    if (!f)
+        return false;
     for (int i = 0; i < repl_history_count; i++) {
         fprintf(f, "%s\n", repl_history[i]);
     }
@@ -348,8 +358,8 @@ bool xs_repl_save_history(const char *path) {
 /* ===== REPL Main Loop ===== */
 int xs_repl_start(void) {
     printf("%s%sX# (Xsharp) REPL%s v1.0.0\n", CLR_BOLD, CLR_CYAN, CLR_RESET);
-    printf("Type %s.help%s for commands, %s.exit%s to quit.\n\n",
-           CLR_YELLOW, CLR_RESET, CLR_YELLOW, CLR_RESET);
+    printf("Type %s.help%s for commands, %s.exit%s to quit.\n\n", CLR_YELLOW, CLR_RESET, CLR_YELLOW,
+           CLR_RESET);
 
     /* Initialize VM */
     vm_init(&repl_vm);
@@ -360,14 +370,14 @@ int xs_repl_start(void) {
     int brace_depth = 0;
 
     while (true) {
-        const char *prompt;
+        const char* prompt;
         if (brace_depth > 0) {
             prompt = "... ";
         } else {
             prompt = "xs> ";
         }
 
-        char *line = read_line(prompt);
+        char* line = read_line(prompt);
         if (!line) {
             /* EOF */
             printf("\n");

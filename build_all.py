@@ -216,12 +216,12 @@ def apply_patches():
     vm_c = SRC / "vm" / "vm.c"
     if vm_c.exists():
         content = file_read(vm_c)
-        bridge = "void vm_register_native(VM *vm, const char *name, XsNativeFn fn)"
-        if bridge not in content:
+        if "vm_register_native" not in content or \
+           ("vm_register_native_fn" in content and "void vm_register_native(" not in content):
             content += """
 /* Bridge: stdlib modules call vm_register_native(VM*, ...) */
-void vm_register_native(VM *vm, const char *name, XsNativeFn fn) {
-    vm_register_native_fn((VMState *)vm, name, fn);
+void vm_register_native(VM* vm, const char* name, XsNativeFn fn) {
+    vm_register_native_fn((VMState*)vm, name, fn);
 }
 """
             file_write(vm_c, content)
@@ -232,8 +232,7 @@ void vm_register_native(VM *vm, const char *name, XsNativeFn fn) {
     runtime_h = SRC / "runtime" / "runtime.h"
     if runtime_h.exists():
         content = file_read(runtime_h)
-        if "void vm_register_native(VM* vm" not in content and \
-           "void vm_register_native(VM *vm" not in content:
+        if "void vm_register_native(" not in content:
             # Add before the final #endif
             marker = "#endif"
             idx = content.rfind(marker)

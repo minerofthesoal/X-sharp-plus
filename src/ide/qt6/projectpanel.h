@@ -7,25 +7,24 @@
 
 #pragma once
 
-#include <QWidget>
-#include <QTreeView>
 #include <QFileSystemModel>
-#include <QVBoxLayout>
 #include <QHBoxLayout>
+#include <QLabel>
 #include <QLineEdit>
 #include <QPushButton>
-#include <QLabel>
 #include <QString>
+#include <QTreeView>
+#include <QVBoxLayout>
+#include <QWidget>
 
-class XsProjectPanel : public QWidget
-{
+class XsProjectPanel : public QWidget {
     Q_OBJECT
 
-public:
-    explicit XsProjectPanel(QWidget *parent = nullptr);
+  public:
+    explicit XsProjectPanel(QWidget* parent = nullptr);
 
     /* Load (or refresh) the view for a given directory */
-    void loadDirectory(const QString &dirPath);
+    void loadDirectory(const QString& dirPath);
 
     /* Reload the currently shown directory */
     void refresh();
@@ -37,19 +36,19 @@ public:
     void applyObsidianTheme();
     void applyRadianceTheme();
 
-signals:
+  signals:
     /* Emitted when the user double-clicks a file */
-    void fileOpenRequested(const QString &filePath);
+    void fileOpenRequested(const QString& filePath);
 
-private slots:
-    void onItemDoubleClicked(const QModelIndex &index);
-    void onFilterChanged(const QString &text);
+  private slots:
+    void onItemDoubleClicked(const QModelIndex& index);
+    void onFilterChanged(const QString& text);
 
-private:
-    QTreeView         *m_treeView;
-    QFileSystemModel  *m_model;
-    QLineEdit         *m_filterEdit;
-    QLabel            *m_rootLabel;
+  private:
+    QTreeView* m_treeView;
+    QFileSystemModel* m_model;
+    QLineEdit* m_filterEdit;
+    QLabel* m_rootLabel;
 
     void setupUi();
     void applyStyleSheet(bool dark);

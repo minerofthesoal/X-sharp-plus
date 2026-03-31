@@ -7,29 +7,28 @@
 
 #pragma once
 
+#include <QRegularExpression>
 #include <QSyntaxHighlighter>
 #include <QTextCharFormat>
-#include <QRegularExpression>
 #include <QVector>
 
-class XSharpHighlighter : public QSyntaxHighlighter
-{
+class XSharpHighlighter : public QSyntaxHighlighter {
     Q_OBJECT
 
-public:
-    explicit XSharpHighlighter(QTextDocument *parent = nullptr);
+  public:
+    explicit XSharpHighlighter(QTextDocument* parent = nullptr);
 
     /* Update colors when theme changes */
     void applyDarkTheme();
     void applyLightTheme();
 
-protected:
-    void highlightBlock(const QString &text) override;
+  protected:
+    void highlightBlock(const QString& text) override;
 
-private:
+  private:
     struct HighlightingRule {
         QRegularExpression pattern;
-        QTextCharFormat    format;
+        QTextCharFormat format;
     };
 
     QVector<HighlightingRule> m_rules;

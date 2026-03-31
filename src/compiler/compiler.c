@@ -8,7 +8,7 @@
 #include <string.h>
 
 /* ===== Lifecycle ===== */
-void compiler_init(Compiler *c, Chunk *chunk, ScopeType type) {
+void compiler_init(Compiler* c, Chunk* chunk, ScopeType type) {
     memset(c, 0, sizeof(Compiler));
     c->chunk = chunk;
     c->scope_type = type;
@@ -21,47 +21,51 @@ void compiler_init(Compiler *c, Chunk *chunk, ScopeType type) {
     c->enclosing = NULL;
 
     /* Reserve slot 0 for the function itself or 'self' */
-    Local *local = &c->locals[c->local_count++];
+    Local* local = &c->locals[c->local_count++];
     strcpy(local->name, "");
     local->depth = 0;
     local->is_captured = false;
 }
 
 /* ===== Error helpers ===== */
-static void compiler_error(Compiler *c, const char *msg, int line) {
-    if (c->error_count >= COMPILER_MAX_ERRORS) return;
-    snprintf(c->errors[c->error_count], COMPILER_MAX_ERROR,
-             "[line %d] Compile error: %s", line, msg);
+static void compiler_error(Compiler* c, const char* msg, int line) {
+    if (c->error_count >= COMPILER_MAX_ERRORS)
+        return;
+    snprintf(c->errors[c->error_count], COMPILER_MAX_ERROR, "[line %d] Compile error: %s", line,
+             msg);
     c->error_count++;
     c->had_error = true;
 }
 
-bool compiler_had_error(const Compiler *c) { return c->had_error; }
+bool compiler_had_error(const Compiler* c) {
+    return c->had_error;
+}
 
-void compiler_print_errors(const Compiler *c) {
+void compiler_print_errors(const Compiler* c) {
     for (int i = 0; i < c->error_count; i++) {
         fprintf(stderr, "%s\n", c->errors[i]);
     }
 }
 
 /* ===== Scope management ===== */
-static void begin_scope(Compiler *c) { c->scope_depth++; }
+static void begin_scope(Compiler* c) {
+    c->scope_depth++;
+}
 
-static void end_scope(Compiler *c) {
+static void end_scope(Compiler* c) {
     c->scope_depth--;
-    while (c->local_count > 0 &&
-           c->locals[c->local_count - 1].depth > c->scope_depth) {
+    while (c->local_count > 0 && c->locals[c->local_count - 1].depth > c->scope_depth) {
         chunk_emit_byte(c->chunk, OP_POP, 0);
         c->local_count--;
     }
 }
 
-static int add_local(Compiler *c, const char *name) {
+static int add_local(Compiler* c, const char* name) {
     if (c->local_count >= COMPILER_MAX_LOCALS) {
         compiler_error(c, "Too many local variables", 0);
         return -1;
     }
-    Local *local = &c->locals[c->local_count];
+    Local* local = &c->locals[c->local_count];
     strncpy(local->name, name, 255);
     local->name[255] = '\0';
     local->depth = c->scope_depth;
@@ -69,38 +73,41 @@ static int add_local(Compiler *c, const char *name) {
     return c->local_count++;
 }
 
-static int resolve_local(Compiler *c, const char *name) {
+static int resolve_local(Compiler* c, const char* name) {
     for (int i = c->local_count - 1; i >= 0; i--) {
-        if (strcmp(c->locals[i].name, name) == 0) return i;
+        if (strcmp(c->locals[i].name, name) == 0)
+            return i;
     }
     return -1;
 }
 
 /* ===== Loop management ===== */
-static void begin_loop(Compiler *c, int loop_start) {
-    if (c->loop_depth >= COMPILER_MAX_LOOPS) return;
-    LoopContext *loop = &c->loops[c->loop_depth++];
+static void begin_loop(Compiler* c, int loop_start) {
+    if (c->loop_depth >= COMPILER_MAX_LOOPS)
+        return;
+    LoopContext* loop = &c->loops[c->loop_depth++];
     loop->loop_start = loop_start;
     loop->body_start = c->chunk->code_count;
     loop->scope_depth = c->scope_depth;
     loop->break_count = 0;
 }
 
-static void end_loop(Compiler *c) {
-    if (c->loop_depth <= 0) return;
-    LoopContext *loop = &c->loops[--c->loop_depth];
+static void end_loop(Compiler* c) {
+    if (c->loop_depth <= 0)
+        return;
+    LoopContext* loop = &c->loops[--c->loop_depth];
     /* Patch all break jumps */
     for (int i = 0; i < loop->break_count; i++) {
         chunk_patch_jump(c->chunk, loop->break_jumps[i]);
     }
 }
 
-static void emit_break(Compiler *c, int line) {
+static void emit_break(Compiler* c, int line) {
     if (c->loop_depth <= 0) {
         compiler_error(c, "shatter_cycle outside of loop", line);
         return;
     }
-    LoopContext *loop = &c->loops[c->loop_depth - 1];
+    LoopContext* loop = &c->loops[c->loop_depth - 1];
     if (loop->break_count >= 64) {
         compiler_error(c, "Too many breaks in loop", line);
         return;
@@ -109,24 +116,29 @@ static void emit_break(Compiler *c, int line) {
 }
 
 /* ===== Expression compilation ===== */
-void compile_expression(Compiler *c, AstNode *node) {
-    if (!node) return;
+void compile_expression(Compiler* c, AstNode* node) {
+    if (!node)
+        return;
 
     switch (node->type) {
     case NODE_LITERAL_INT:
-        chunk_emit_const_op(c->chunk, OP_PUSH_BLADE, xs_blade(node->as.literal_int.value), node->line);
+        chunk_emit_const_op(c->chunk, OP_PUSH_BLADE, xs_blade(node->as.literal_int.value),
+                            node->line);
         break;
 
     case NODE_LITERAL_FLOAT:
-        chunk_emit_const_op(c->chunk, OP_PUSH_SPARK, xs_spark(node->as.literal_float.value), node->line);
+        chunk_emit_const_op(c->chunk, OP_PUSH_SPARK, xs_spark(node->as.literal_float.value),
+                            node->line);
         break;
 
     case NODE_LITERAL_STRING:
-        chunk_emit_const_op(c->chunk, OP_PUSH_SCROLL, xs_scroll(node->as.literal_string.value), node->line);
+        chunk_emit_const_op(c->chunk, OP_PUSH_SCROLL, xs_scroll(node->as.literal_string.value),
+                            node->line);
         break;
 
     case NODE_LITERAL_BOOL:
-        chunk_emit_byte(c->chunk, node->as.literal_bool.value ? OP_PUSH_TRUTH : OP_PUSH_LIES, node->line);
+        chunk_emit_byte(c->chunk, node->as.literal_bool.value ? OP_PUSH_TRUTH : OP_PUSH_LIES,
+                        node->line);
         break;
 
     case NODE_LITERAL_NULL:
@@ -140,7 +152,7 @@ void compile_expression(Compiler *c, AstNode *node) {
             chunk_emit_short(c->chunk, (uint16_t)slot, node->line);
         } else {
             chunk_emit_const_op(c->chunk, OP_LOAD_GLOBAL,
-                xs_scroll(strdup(node->as.identifier.name)), node->line);
+                                xs_scroll(strdup(node->as.identifier.name)), node->line);
         }
         break;
     }
@@ -149,27 +161,65 @@ void compile_expression(Compiler *c, AstNode *node) {
         compile_expression(c, node->as.binary.left);
         compile_expression(c, node->as.binary.right);
         switch (node->as.binary.op) {
-            case TOK_PLUS:          chunk_emit_byte(c->chunk, OP_ADD, node->line); break;
-            case TOK_MINUS:         chunk_emit_byte(c->chunk, OP_SUB, node->line); break;
-            case TOK_STAR:          chunk_emit_byte(c->chunk, OP_MUL, node->line); break;
-            case TOK_SLASH:         chunk_emit_byte(c->chunk, OP_DIV, node->line); break;
-            case TOK_PERCENT:       chunk_emit_byte(c->chunk, OP_MOD, node->line); break;
-            case TOK_POWER:         chunk_emit_byte(c->chunk, OP_POW, node->line); break;
-            case TOK_EQUAL_EQUAL:   chunk_emit_byte(c->chunk, OP_EQ, node->line); break;
-            case TOK_BANG_EQUAL:    chunk_emit_byte(c->chunk, OP_NEQ, node->line); break;
-            case TOK_LESS:          chunk_emit_byte(c->chunk, OP_LT, node->line); break;
-            case TOK_GREATER:       chunk_emit_byte(c->chunk, OP_GT, node->line); break;
-            case TOK_LESS_EQUAL:    chunk_emit_byte(c->chunk, OP_LTE, node->line); break;
-            case TOK_GREATER_EQUAL: chunk_emit_byte(c->chunk, OP_GTE, node->line); break;
-            case TOK_AND_AND:       chunk_emit_byte(c->chunk, OP_AND, node->line); break;
-            case TOK_OR_OR:         chunk_emit_byte(c->chunk, OP_OR, node->line); break;
-            case TOK_AMPERSAND:     chunk_emit_byte(c->chunk, OP_BIT_AND, node->line); break;
-            case TOK_PIPE:          chunk_emit_byte(c->chunk, OP_BIT_OR, node->line); break;
-            case TOK_CARET:         chunk_emit_byte(c->chunk, OP_BIT_XOR, node->line); break;
-            case TOK_LSHIFT:        chunk_emit_byte(c->chunk, OP_SHL, node->line); break;
-            case TOK_RSHIFT:        chunk_emit_byte(c->chunk, OP_SHR, node->line); break;
-            default:
-                compiler_error(c, "Unknown binary operator", node->line);
+        case TOK_PLUS:
+            chunk_emit_byte(c->chunk, OP_ADD, node->line);
+            break;
+        case TOK_MINUS:
+            chunk_emit_byte(c->chunk, OP_SUB, node->line);
+            break;
+        case TOK_STAR:
+            chunk_emit_byte(c->chunk, OP_MUL, node->line);
+            break;
+        case TOK_SLASH:
+            chunk_emit_byte(c->chunk, OP_DIV, node->line);
+            break;
+        case TOK_PERCENT:
+            chunk_emit_byte(c->chunk, OP_MOD, node->line);
+            break;
+        case TOK_POWER:
+            chunk_emit_byte(c->chunk, OP_POW, node->line);
+            break;
+        case TOK_EQUAL_EQUAL:
+            chunk_emit_byte(c->chunk, OP_EQ, node->line);
+            break;
+        case TOK_BANG_EQUAL:
+            chunk_emit_byte(c->chunk, OP_NEQ, node->line);
+            break;
+        case TOK_LESS:
+            chunk_emit_byte(c->chunk, OP_LT, node->line);
+            break;
+        case TOK_GREATER:
+            chunk_emit_byte(c->chunk, OP_GT, node->line);
+            break;
+        case TOK_LESS_EQUAL:
+            chunk_emit_byte(c->chunk, OP_LTE, node->line);
+            break;
+        case TOK_GREATER_EQUAL:
+            chunk_emit_byte(c->chunk, OP_GTE, node->line);
+            break;
+        case TOK_AND_AND:
+            chunk_emit_byte(c->chunk, OP_AND, node->line);
+            break;
+        case TOK_OR_OR:
+            chunk_emit_byte(c->chunk, OP_OR, node->line);
+            break;
+        case TOK_AMPERSAND:
+            chunk_emit_byte(c->chunk, OP_BIT_AND, node->line);
+            break;
+        case TOK_PIPE:
+            chunk_emit_byte(c->chunk, OP_BIT_OR, node->line);
+            break;
+        case TOK_CARET:
+            chunk_emit_byte(c->chunk, OP_BIT_XOR, node->line);
+            break;
+        case TOK_LSHIFT:
+            chunk_emit_byte(c->chunk, OP_SHL, node->line);
+            break;
+        case TOK_RSHIFT:
+            chunk_emit_byte(c->chunk, OP_SHR, node->line);
+            break;
+        default:
+            compiler_error(c, "Unknown binary operator", node->line);
         }
         break;
     }
@@ -177,10 +227,17 @@ void compile_expression(Compiler *c, AstNode *node) {
     case NODE_UNARY_EXPR:
         compile_expression(c, node->as.unary.operand);
         switch (node->as.unary.op) {
-            case TOK_MINUS: chunk_emit_byte(c->chunk, OP_NEG, node->line); break;
-            case TOK_BANG:  chunk_emit_byte(c->chunk, OP_NOT, node->line); break;
-            case TOK_TILDE: chunk_emit_byte(c->chunk, OP_BIT_NOT, node->line); break;
-            default: compiler_error(c, "Unknown unary operator", node->line);
+        case TOK_MINUS:
+            chunk_emit_byte(c->chunk, OP_NEG, node->line);
+            break;
+        case TOK_BANG:
+            chunk_emit_byte(c->chunk, OP_NOT, node->line);
+            break;
+        case TOK_TILDE:
+            chunk_emit_byte(c->chunk, OP_BIT_NOT, node->line);
+            break;
+        default:
+            compiler_error(c, "Unknown unary operator", node->line);
         }
         break;
 
@@ -197,7 +254,7 @@ void compile_expression(Compiler *c, AstNode *node) {
     case NODE_MEMBER_ACCESS:
         compile_expression(c, node->as.member_access.object);
         chunk_emit_const_op(c->chunk, OP_GET_FIELD,
-            xs_scroll(strdup(node->as.member_access.member)), node->line);
+                            xs_scroll(strdup(node->as.member_access.member)), node->line);
         break;
 
     case NODE_INDEX_EXPR:
@@ -209,18 +266,18 @@ void compile_expression(Compiler *c, AstNode *node) {
     case NODE_ASSIGNMENT:
         compile_expression(c, node->as.assignment.value);
         if (node->as.assignment.target->type == NODE_IDENTIFIER) {
-            const char *name = node->as.assignment.target->as.identifier.name;
+            const char* name = node->as.assignment.target->as.identifier.name;
             int slot = resolve_local(c, name);
             if (slot >= 0) {
                 chunk_emit_byte(c->chunk, OP_STORE_LOCAL, node->line);
                 chunk_emit_short(c->chunk, (uint16_t)slot, node->line);
             } else {
-                chunk_emit_const_op(c->chunk, OP_STORE_GLOBAL,
-                    xs_scroll(strdup(name)), node->line);
+                chunk_emit_const_op(c->chunk, OP_STORE_GLOBAL, xs_scroll(strdup(name)), node->line);
             }
         } else if (node->as.assignment.target->type == NODE_MEMBER_ACCESS) {
             compile_expression(c, node->as.assignment.target->as.member_access.object);
-            chunk_emit_const_op(c->chunk, OP_SET_FIELD,
+            chunk_emit_const_op(
+                c->chunk, OP_SET_FIELD,
                 xs_scroll(strdup(node->as.assignment.target->as.member_access.member)), node->line);
         } else if (node->as.assignment.target->type == NODE_INDEX_EXPR) {
             compile_expression(c, node->as.assignment.target->as.index_expr.object);
@@ -250,8 +307,8 @@ void compile_expression(Compiler *c, AstNode *node) {
         for (int i = 0; i < node->as.conjure.args.count; i++) {
             compile_expression(c, node->as.conjure.args.items[i]);
         }
-        uint16_t name_idx = (uint16_t)chunk_add_constant(c->chunk,
-            xs_scroll(strdup(node->as.conjure.entity_name)));
+        uint16_t name_idx =
+            (uint16_t)chunk_add_constant(c->chunk, xs_scroll(strdup(node->as.conjure.entity_name)));
         chunk_emit_byte(c->chunk, OP_NEW, node->line);
         chunk_emit_short(c->chunk, name_idx, node->line);
         chunk_emit_byte(c->chunk, (uint8_t)node->as.conjure.args.count, node->line);
@@ -299,8 +356,9 @@ void compile_expression(Compiler *c, AstNode *node) {
 }
 
 /* ===== Statement compilation ===== */
-void compile_statement(Compiler *c, AstNode *node) {
-    if (!node) return;
+void compile_statement(Compiler* c, AstNode* node) {
+    if (!node)
+        return;
 
     switch (node->type) {
     case NODE_EXPR_STMT:
@@ -360,7 +418,8 @@ void compile_statement(Compiler *c, AstNode *node) {
 
     case NODE_CYCLE_STMT: {
         begin_scope(c);
-        if (node->as.cycle.init) compile_node(c, node->as.cycle.init);
+        if (node->as.cycle.init)
+            compile_node(c, node->as.cycle.init);
         int loop_start = c->chunk->code_count;
         begin_loop(c, loop_start);
         if (node->as.cycle.condition) {
@@ -431,8 +490,9 @@ void compile_statement(Compiler *c, AstNode *node) {
 }
 
 /* ===== Declaration compilation ===== */
-void compile_declaration(Compiler *c, AstNode *node) {
-    if (!node) return;
+void compile_declaration(Compiler* c, AstNode* node) {
+    if (!node)
+        return;
 
     switch (node->type) {
     case NODE_VAR_DECL:
@@ -446,7 +506,7 @@ void compile_declaration(Compiler *c, AstNode *node) {
             add_local(c, node->as.var_decl.name);
         } else {
             chunk_emit_const_op(c->chunk, OP_STORE_GLOBAL,
-                xs_scroll(strdup(node->as.var_decl.name)), node->line);
+                                xs_scroll(strdup(node->as.var_decl.name)), node->line);
             chunk_emit_byte(c->chunk, OP_POP, node->line);
         }
         break;
@@ -459,8 +519,8 @@ void compile_declaration(Compiler *c, AstNode *node) {
         if (c->scope_depth > 0) {
             add_local(c, node->as.forge.name);
         } else {
-            chunk_emit_const_op(c->chunk, OP_STORE_GLOBAL,
-                xs_scroll(strdup(node->as.forge.name)), node->line);
+            chunk_emit_const_op(c->chunk, OP_STORE_GLOBAL, xs_scroll(strdup(node->as.forge.name)),
+                                node->line);
             chunk_emit_byte(c->chunk, OP_POP, node->line);
         }
         break;
@@ -469,8 +529,8 @@ void compile_declaration(Compiler *c, AstNode *node) {
     case NODE_ENTITY_DECL: {
         /* Compile entity as a global */
         chunk_emit_byte(c->chunk, OP_PUSH_ABYSS, node->line);
-        chunk_emit_const_op(c->chunk, OP_STORE_GLOBAL,
-            xs_scroll(strdup(node->as.entity.name)), node->line);
+        chunk_emit_const_op(c->chunk, OP_STORE_GLOBAL, xs_scroll(strdup(node->as.entity.name)),
+                            node->line);
         chunk_emit_byte(c->chunk, OP_POP, node->line);
         break;
     }
@@ -504,22 +564,36 @@ void compile_declaration(Compiler *c, AstNode *node) {
 }
 
 /* ===== Generic node compilation ===== */
-void compile_node(Compiler *c, AstNode *node) {
-    if (!node) return;
+void compile_node(Compiler* c, AstNode* node) {
+    if (!node)
+        return;
 
     switch (node->type) {
     /* Declarations */
-    case NODE_VAR_DECL: case NODE_CONST_DECL: case NODE_FORGE_DECL:
-    case NODE_ENTITY_DECL: case NODE_REALM_DECL: case NODE_SUMMON_DECL:
-    case NODE_QUEST_DECL: case NODE_GPU_BLOCK: case NODE_AI_BLOCK:
+    case NODE_VAR_DECL:
+    case NODE_CONST_DECL:
+    case NODE_FORGE_DECL:
+    case NODE_ENTITY_DECL:
+    case NODE_REALM_DECL:
+    case NODE_SUMMON_DECL:
+    case NODE_QUEST_DECL:
+    case NODE_GPU_BLOCK:
+    case NODE_AI_BLOCK:
         compile_declaration(c, node);
         break;
 
     /* Statements */
-    case NODE_EXPR_STMT: case NODE_BLOCK_STMT: case NODE_ORACLE_STMT:
-    case NODE_CYCLE_STMT: case NODE_WHILE_STMT: case NODE_UNLEASH_STMT:
-    case NODE_SHATTER_CYCLE_STMT: case NODE_SKIP_STMT: case NODE_ENGRAVE_STMT:
-    case NODE_SHIELD_STMT: case NODE_SHATTER_STMT:
+    case NODE_EXPR_STMT:
+    case NODE_BLOCK_STMT:
+    case NODE_ORACLE_STMT:
+    case NODE_CYCLE_STMT:
+    case NODE_WHILE_STMT:
+    case NODE_UNLEASH_STMT:
+    case NODE_SHATTER_CYCLE_STMT:
+    case NODE_SKIP_STMT:
+    case NODE_ENGRAVE_STMT:
+    case NODE_SHIELD_STMT:
+    case NODE_SHATTER_STMT:
         compile_statement(c, node);
         break;
 
@@ -538,13 +612,13 @@ void compile_node(Compiler *c, AstNode *node) {
 }
 
 /* ===== Public API ===== */
-bool compiler_compile(Compiler *c, AstNode *program) {
+bool compiler_compile(Compiler* c, AstNode* program) {
     compile_node(c, program);
     chunk_emit_byte(c->chunk, OP_HALT, 0);
     return !c->had_error;
 }
 
-bool compiler_compile_expression(Compiler *c, AstNode *expr) {
+bool compiler_compile_expression(Compiler* c, AstNode* expr) {
     compile_expression(c, expr);
     chunk_emit_byte(c->chunk, OP_HALT, 0);
     return !c->had_error;

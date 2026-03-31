@@ -1,0 +1,20 @@
+// cppcheck suppressions
+// Suppress const-correctness suggestions - these are style preferences, not bugs
+constVariablePointer
+constParameterPointer
+constVariable
+
+// Suppress shadow warnings for variable/function name collisions
+shadowFunction
+
+// Suppress known-false conditions in match-finding code (defensive checks)
+knownConditionTrueFalse:src/formats/lzma2.c
+
+// Suppress truncation warning - intentional uint64_t to uint32_t shift in range coder
+truncLongCastAssignment:src/formats/lzma2.c
+
+// Suppress false positive: pipeline.c frag_color is a value type, not a pointer
+invalidLifetime:src/renderer/core/pipeline.c
+
+// Suppress false positive: accessing struct member array via pointer arithmetic
+objectIndex:src/renderer/core/texture.c

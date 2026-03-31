@@ -6,20 +6,22 @@
 
 #include "project.h"
 
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 
 /* ===== Helpers ===== */
-static char *trim_inplace(char *s) {
-    while (isspace((unsigned char)*s)) s++;
-    char *end = s + strlen(s) - 1;
-    while (end > s && isspace((unsigned char)*end)) *end-- = '\0';
+static char* trim_inplace(char* s) {
+    while (isspace((unsigned char)*s))
+        s++;
+    char* end = s + strlen(s) - 1;
+    while (end > s && isspace((unsigned char)*end))
+        *end-- = '\0';
     return s;
 }
 
-static void strip_quotes(char *s) {
+static void strip_quotes(char* s) {
     size_t len = strlen(s);
     if (len >= 2 && s[0] == '"' && s[len - 1] == '"') {
         memmove(s, s + 1, len - 2);
@@ -28,9 +30,10 @@ static void strip_quotes(char *s) {
 }
 
 /* ===== Lifecycle ===== */
-XsProject *xs_project_new(void) {
-    XsProject *p = (XsProject *)calloc(1, sizeof(XsProject));
-    if (!p) return NULL;
+XsProject* xs_project_new(void) {
+    XsProject* p = (XsProject*)calloc(1, sizeof(XsProject));
+    if (!p)
+        return NULL;
     strcpy(p->name, "untitled");
     strcpy(p->version, "0.1.0");
     strcpy(p->entry_file, "main.xs");
@@ -40,20 +43,22 @@ XsProject *xs_project_new(void) {
     return p;
 }
 
-void xs_project_free(XsProject *proj) {
+void xs_project_free(XsProject* proj) {
     free(proj);
 }
 
 /* ===== Load .xsproj ===== */
-bool xs_project_load(XsProject *proj, const char *path) {
-    if (!proj || !path) return false;
+bool xs_project_load(XsProject* proj, const char* path) {
+    if (!proj || !path)
+        return false;
 
-    FILE *f = fopen(path, "r");
-    if (!f) return false;
+    FILE* f = fopen(path, "r");
+    if (!f)
+        return false;
 
     /* Extract root directory */
     strncpy(proj->root_dir, path, sizeof(proj->root_dir) - 1);
-    char *last_slash = strrchr(proj->root_dir, '/');
+    char* last_slash = strrchr(proj->root_dir, '/');
     if (last_slash) {
         *last_slash = '\0';
     } else {
@@ -64,14 +69,15 @@ bool xs_project_load(XsProject *proj, const char *path) {
     char section[64] = "";
 
     while (fgets(line, sizeof(line), f)) {
-        char *t = trim_inplace(line);
+        char* t = trim_inplace(line);
 
         /* Skip empty lines and comments */
-        if (t[0] == '\0' || t[0] == '#' || t[0] == ';') continue;
+        if (t[0] == '\0' || t[0] == '#' || t[0] == ';')
+            continue;
 
         /* Section header */
         if (t[0] == '[') {
-            char *end = strchr(t, ']');
+            char* end = strchr(t, ']');
             if (end) {
                 *end = '\0';
                 strncpy(section, t + 1, sizeof(section) - 1);
@@ -81,12 +87,13 @@ bool xs_project_load(XsProject *proj, const char *path) {
         }
 
         /* Key = Value */
-        char *eq = strchr(t, '=');
-        if (!eq) continue;
+        char* eq = strchr(t, '=');
+        if (!eq)
+            continue;
 
         *eq = '\0';
-        char *key = trim_inplace(t);
-        char *val = trim_inplace(eq + 1);
+        char* key = trim_inplace(t);
+        char* val = trim_inplace(eq + 1);
         strip_quotes(val);
 
         if (strcmp(section, "project") == 0) {
@@ -112,11 +119,13 @@ bool xs_project_load(XsProject *proj, const char *path) {
 }
 
 /* ===== Save .xsproj ===== */
-bool xs_project_save(XsProject *proj, const char *path) {
-    if (!proj || !path) return false;
+bool xs_project_save(XsProject* proj, const char* path) {
+    if (!proj || !path)
+        return false;
 
-    FILE *f = fopen(path, "w");
-    if (!f) return false;
+    FILE* f = fopen(path, "w");
+    if (!f)
+        return false;
 
     fprintf(f, "[project]\n");
     fprintf(f, "name = \"%s\"\n", proj->name);
@@ -143,7 +152,8 @@ bool xs_project_save(XsProject *proj, const char *path) {
     return true;
 }
 
-const char *xs_project_get_entry(XsProject *proj) {
-    if (!proj) return NULL;
+const char* xs_project_get_entry(XsProject* proj) {
+    if (!proj)
+        return NULL;
     return proj->entry_file;
 }

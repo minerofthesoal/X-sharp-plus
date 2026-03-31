@@ -14,14 +14,14 @@
 
 #pragma once
 
-#include <QMainWindow>
 #include <QAction>
-#include <QLabel>
 #include <QDockWidget>
-#include <QTimer>
+#include <QLabel>
+#include <QMainWindow>
+#include <QProcess>
 #include <QSettings>
 #include <QString>
-#include <QProcess>
+#include <QTimer>
 
 class XsEditor;
 class XsProjectPanel;
@@ -32,38 +32,37 @@ class XsDebugPanel;
  * IDE Preferences
  * =================================================================== */
 struct XsIdePrefs {
-    QString  themeName             = QStringLiteral("Obsidian");
-    int      fontSize              = 12;
-    QString  fontFamily            = QStringLiteral("Monospace");
-    bool     showLineNumbers       = true;
-    bool     showMinimap           = false;
-    bool     autoIndent            = true;
-    bool     highlightCurrentLine  = true;
-    bool     bracketMatching       = true;
-    bool     wordWrap              = false;
-    int      tabWidth              = 4;
-    bool     useSpaces             = true;
-    bool     autoSave              = false;
-    int      autoSaveIntervalSec   = 30;
-    QString  buildCommand          = QStringLiteral("xsharp build");
-    QString  runCommand            = QStringLiteral("xsharp run");
+    QString themeName = QStringLiteral("Obsidian");
+    int fontSize = 12;
+    QString fontFamily = QStringLiteral("Monospace");
+    bool showLineNumbers = true;
+    bool showMinimap = false;
+    bool autoIndent = true;
+    bool highlightCurrentLine = true;
+    bool bracketMatching = true;
+    bool wordWrap = false;
+    int tabWidth = 4;
+    bool useSpaces = true;
+    bool autoSave = false;
+    int autoSaveIntervalSec = 30;
+    QString buildCommand = QStringLiteral("xsharp build");
+    QString runCommand = QStringLiteral("xsharp run");
 };
 
 /* ===================================================================
  * XsMainWindow
  * =================================================================== */
-class XsMainWindow : public QMainWindow
-{
+class XsMainWindow : public QMainWindow {
     Q_OBJECT
 
-public:
-    explicit XsMainWindow(QWidget *parent = nullptr);
+  public:
+    explicit XsMainWindow(QWidget* parent = nullptr);
     ~XsMainWindow() override;
 
-protected:
-    void closeEvent(QCloseEvent *event) override;
+  protected:
+    void closeEvent(QCloseEvent* event) override;
 
-private slots:
+  private slots:
     /* File menu */
     void onNewFile();
     void onOpenFile();
@@ -105,40 +104,40 @@ private slots:
 
     /* Internal */
     void onCursorMoved(int line, int col);
-    void onFileChanged(const QString &path);
+    void onFileChanged(const QString& path);
     void onBuildProcessFinished(int exitCode, QProcess::ExitStatus status);
     void onBuildProcessOutput();
     void onAutoSaveTick();
 
-private:
+  private:
     /* Components */
-    XsEditor        *m_editor;
-    XsProjectPanel  *m_projectPanel;
-    XsConsolePanel  *m_consolePanel;
-    XsDebugPanel    *m_debugPanel;
+    XsEditor* m_editor;
+    XsProjectPanel* m_projectPanel;
+    XsConsolePanel* m_consolePanel;
+    XsDebugPanel* m_debugPanel;
 
     /* Dock widgets */
-    QDockWidget *m_projectDock;
-    QDockWidget *m_consoleDock;
-    QDockWidget *m_debugDock;
+    QDockWidget* m_projectDock;
+    QDockWidget* m_consoleDock;
+    QDockWidget* m_debugDock;
 
     /* Status bar labels */
-    QLabel *m_statusCursor;
-    QLabel *m_statusFile;
-    QLabel *m_statusLanguage;
-    QLabel *m_statusEncoding;
+    QLabel* m_statusCursor;
+    QLabel* m_statusFile;
+    QLabel* m_statusLanguage;
+    QLabel* m_statusEncoding;
 
     /* State */
-    XsIdePrefs  m_prefs;
-    bool        m_isDebugging = false;
-    QProcess   *m_buildProcess = nullptr;
+    XsIdePrefs m_prefs;
+    bool m_isDebugging = false;
+    QProcess* m_buildProcess = nullptr;
 
     /* Auto-save timer */
-    QTimer *m_autoSaveTimer;
+    QTimer* m_autoSaveTimer;
 
     /* Recent files */
     QStringList m_recentFiles;
-    QMenu      *m_recentMenu = nullptr;
+    QMenu* m_recentMenu = nullptr;
     static constexpr int MaxRecentFiles = 20;
 
     /* Build helpers */
@@ -147,9 +146,9 @@ private:
     void buildStatusBar();
     void buildDockPanels();
 
-    void updateWindowTitle(const QString &filename = QString());
-    void updateStatusBar(int line, int col, const QString &file,
-                         const QString &encoding = QStringLiteral("UTF-8"));
+    void updateWindowTitle(const QString& filename = QString());
+    void updateStatusBar(int line, int col, const QString& file,
+                         const QString& encoding = QStringLiteral("UTF-8"));
 
     /* Theme application */
     void applyObsidianTheme();
@@ -163,6 +162,6 @@ private:
     void showPreferencesDialog();
 
     /* Recent files */
-    void addRecentFile(const QString &path);
+    void addRecentFile(const QString& path);
     void rebuildRecentMenu();
 };

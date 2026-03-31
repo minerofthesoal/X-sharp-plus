@@ -9,40 +9,32 @@
 
 #pragma once
 
-#include <QWidget>
-#include <QPlainTextEdit>
-#include <QVBoxLayout>
-#include <QHBoxLayout>
-#include <QPushButton>
-#include <QComboBox>
-#include <QLabel>
-#include <QString>
 #include <QColor>
+#include <QComboBox>
+#include <QHBoxLayout>
+#include <QLabel>
 #include <QMap>
+#include <QPlainTextEdit>
+#include <QPushButton>
+#include <QString>
+#include <QVBoxLayout>
+#include <QWidget>
 
-class XsConsolePanel : public QWidget
-{
+class XsConsolePanel : public QWidget {
     Q_OBJECT
 
-public:
+  public:
     /* Output categories – matching the GTK3 tag names */
-    enum OutputType {
-        Info,
-        Error,
-        Success,
-        Warning,
-        Output,
-        Command
-    };
+    enum OutputType { Info, Error, Success, Warning, Output, Command };
 
-    explicit XsConsolePanel(QWidget *parent = nullptr);
+    explicit XsConsolePanel(QWidget* parent = nullptr);
 
     /* Append text with a given type/color */
-    void append(const QString &text, OutputType type = Output);
+    void append(const QString& text, OutputType type = Output);
 
     /* Convenience overload that accepts the GTK tag name strings
        ("info", "error", "success", "warning", "output") */
-    void appendTagged(const QString &text, const QString &tagName);
+    void appendTagged(const QString& text, const QString& tagName);
 
     /* Clear all output */
     void clear();
@@ -51,13 +43,13 @@ public:
     void applyObsidianTheme();
     void applyRadianceTheme();
 
-private slots:
+  private slots:
     void onClearClicked();
 
-private:
-    QPlainTextEdit *m_output;
-    QPushButton    *m_clearBtn;
-    QLabel         *m_titleLabel;
+  private:
+    QPlainTextEdit* m_output;
+    QPushButton* m_clearBtn;
+    QLabel* m_titleLabel;
 
     QMap<OutputType, QColor> m_colors;
 

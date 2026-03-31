@@ -34,14 +34,14 @@ typedef struct {
 } XsTheme;
 
 /* Lifecycle (pointer-based API for IDE integration) */
-XsTheme *xs_theme_new(void);
-void     xs_theme_free(XsTheme *theme);
+XsTheme* xs_theme_new(void);
+void xs_theme_free(XsTheme* theme);
 
 /* Presets - by-value for simple use */
 XsTheme xs_theme_obsidian(void);
 XsTheme xs_theme_radiance(void);
 
 /* Apply theme via CSS */
-void xs_theme_apply(XsTheme *theme, GtkWidget *window);
+void xs_theme_apply(XsTheme* theme, GtkWidget* window);
 
 #endif /* XS_IDE_THEME_H */
