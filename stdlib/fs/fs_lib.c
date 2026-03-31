@@ -4,8 +4,13 @@
  * Extended filesystem operations using POSIX APIs.
  */
 
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif
 #include "fs_lib.h"
+#ifndef PATH_MAX
+#define PATH_MAX 4096
+#endif
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>

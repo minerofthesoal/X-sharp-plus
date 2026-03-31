@@ -10,9 +10,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-XsConsolePanel *xs_console_panel_new(void) {
-    XsConsolePanel *panel = (XsConsolePanel *)calloc(1, sizeof(XsConsolePanel));
-    if (!panel) return NULL;
+XsConsolePanel* xs_console_panel_new(void) {
+    XsConsolePanel* panel = (XsConsolePanel*)calloc(1, sizeof(XsConsolePanel));
+    if (!panel)
+        return NULL;
 
     panel->buffer = gtk_text_buffer_new(NULL);
     panel->text_view = gtk_text_view_new_with_buffer(panel->buffer);
@@ -23,13 +24,13 @@ XsConsolePanel *xs_console_panel_new(void) {
     gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(panel->text_view), GTK_WRAP_WORD_CHAR);
 
     /* Set monospace font */
-    PangoFontDescription *font = pango_font_description_from_string("Monospace 10");
+    PangoFontDescription* font = pango_font_description_from_string("Monospace 10");
     gtk_widget_override_font(panel->text_view, font);
     pango_font_description_free(font);
 
     /* Set dark background */
-    GdkRGBA bg = { 0.12, 0.12, 0.14, 1.0 };
-    GdkRGBA fg = { 0.85, 0.85, 0.85, 1.0 };
+    GdkRGBA bg = {0.12, 0.12, 0.14, 1.0};
+    GdkRGBA fg = {0.85, 0.85, 0.85, 1.0};
     gtk_widget_override_background_color(panel->text_view, GTK_STATE_FLAG_NORMAL, &bg);
     gtk_widget_override_color(panel->text_view, GTK_STATE_FLAG_NORMAL, &fg);
 
@@ -38,14 +39,14 @@ XsConsolePanel *xs_console_panel_new(void) {
     gtk_text_view_set_top_margin(GTK_TEXT_VIEW(panel->text_view), 4);
 
     /* Create color tags */
-    GtkTextTagTable *tag_table = gtk_text_buffer_get_tag_table(panel->buffer);
+    GtkTextTagTable* tag_table = gtk_text_buffer_get_tag_table(panel->buffer);
 
     panel->tag_info = gtk_text_tag_new("info");
-    g_object_set(panel->tag_info, "foreground", "#78DCE8", NULL);  /* cyan */
+    g_object_set(panel->tag_info, "foreground", "#78DCE8", NULL); /* cyan */
     gtk_text_tag_table_add(tag_table, panel->tag_info);
 
     panel->tag_error = gtk_text_tag_new("error");
-    g_object_set(panel->tag_error, "foreground", "#FF6188", NULL);  /* red */
+    g_object_set(panel->tag_error, "foreground", "#FF6188", NULL); /* red */
     gtk_text_tag_table_add(tag_table, panel->tag_error);
 
     panel->tag_success = gtk_text_tag_new("success");
@@ -70,19 +71,22 @@ XsConsolePanel *xs_console_panel_new(void) {
     return panel;
 }
 
-void xs_console_panel_free(XsConsolePanel *panel) {
-    if (!panel) return;
+void xs_console_panel_free(XsConsolePanel* panel) {
+    if (!panel)
+        return;
     /* Tags are owned by the tag table; widgets are owned by GTK */
     free(panel);
 }
 
-GtkWidget *xs_console_panel_get_widget(XsConsolePanel *panel) {
-    if (!panel) return NULL;
+GtkWidget* xs_console_panel_get_widget(XsConsolePanel* panel) {
+    if (!panel)
+        return NULL;
     return panel->scrolled_window;
 }
 
-void xs_console_panel_append(XsConsolePanel *panel, const char *text, const char *tag_name) {
-    if (!panel || !text) return;
+void xs_console_panel_append(XsConsolePanel* panel, const char* text, const char* tag_name) {
+    if (!panel || !text)
+        return;
 
     GtkTextIter end;
     gtk_text_buffer_get_end_iter(panel->buffer, &end);
@@ -95,13 +99,14 @@ void xs_console_panel_append(XsConsolePanel *panel, const char *text, const char
 
     /* Auto-scroll to bottom */
     gtk_text_buffer_get_end_iter(panel->buffer, &end);
-    GtkTextMark *mark = gtk_text_buffer_create_mark(panel->buffer, NULL, &end, FALSE);
+    GtkTextMark* mark = gtk_text_buffer_create_mark(panel->buffer, NULL, &end, FALSE);
     gtk_text_view_scroll_to_mark(GTK_TEXT_VIEW(panel->text_view), mark, 0.0, FALSE, 0.0, 0.0);
     gtk_text_buffer_delete_mark(panel->buffer, mark);
 }
 
-void xs_console_panel_clear(XsConsolePanel *panel) {
-    if (!panel) return;
+void xs_console_panel_clear(XsConsolePanel* panel) {
+    if (!panel)
+        return;
     GtkTextIter start, end;
     gtk_text_buffer_get_bounds(panel->buffer, &start, &end);
     gtk_text_buffer_delete(panel->buffer, &start, &end);

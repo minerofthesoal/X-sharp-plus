@@ -363,6 +363,32 @@ XsValue xs_phys_getBodyState(int argc, XsValue* args) {
     return xs_entity(e);
 }
 
+/* ===== Position / Velocity accessors ===== */
+
+XsValue xs_phys_getPosition(int argc, XsValue* args) {
+    if (argc < 2) return xs_abyss();
+    PhysWorld* w = get_world(args[0]);
+    if (!w) return xs_abyss();
+    PhysBody* b = find_body(w, (int)xs_as_spark(args[1]));
+    if (!b) return xs_abyss();
+    XsEntity* e = xs_entity_new();
+    xs_entity_set(e, "x", xs_spark(b->x));
+    xs_entity_set(e, "y", xs_spark(b->y));
+    return xs_entity(e);
+}
+
+XsValue xs_phys_getVelocity(int argc, XsValue* args) {
+    if (argc < 2) return xs_abyss();
+    PhysWorld* w = get_world(args[0]);
+    if (!w) return xs_abyss();
+    PhysBody* b = find_body(w, (int)xs_as_spark(args[1]));
+    if (!b) return xs_abyss();
+    XsEntity* e = xs_entity_new();
+    xs_entity_set(e, "x", xs_spark(b->vx));
+    xs_entity_set(e, "y", xs_spark(b->vy));
+    return xs_entity(e);
+}
+
 /* ===== Registration ===== */
 
 void xs_physics_register(VM* vm) {

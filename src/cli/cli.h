@@ -7,7 +7,7 @@
 #define XSHARP_CLI_H
 
 /* Dispatch a CLI command. Returns exit code. */
-int xs_cli_dispatch(int argc, char **argv);
+int xs_cli_dispatch(int argc, char** argv);
 
 /* Runtime init/shutdown (declared in runtime.h, defined in runtime.c) */
 void xs_runtime_init(void);

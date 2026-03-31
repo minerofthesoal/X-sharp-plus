@@ -4,73 +4,84 @@
  */
 
 #include "shortcuts.h"
-#include "linter.h"
+#include "../codegen/codegen.h"
+#include "../compiler/compiler.h"
 #include "../lexer/lexer.h"
 #include "../parser/parser.h"
-#include "../compiler/compiler.h"
-#include "../codegen/codegen.h"
 #include "../vm/vm.h"
+#include "linter.h"
 
+#include <dirent.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdbool.h>
 #include <sys/stat.h>
-#include <dirent.h>
-#include <unistd.h>
 #include <time.h>
+#include <unistd.h>
 
 /* ===== ANSI Colors ===== */
-#define CLR_RESET   "\033[0m"
-#define CLR_RED     "\033[31m"
-#define CLR_GREEN   "\033[32m"
-#define CLR_YELLOW  "\033[33m"
-#define CLR_CYAN    "\033[36m"
-#define CLR_BOLD    "\033[1m"
-#define CLR_DIM     "\033[2m"
+#define CLR_RESET "\033[0m"
+#define CLR_RED "\033[31m"
+#define CLR_GREEN "\033[32m"
+#define CLR_YELLOW "\033[33m"
+#define CLR_CYAN "\033[36m"
+#define CLR_BOLD "\033[1m"
+#define CLR_DIM "\033[2m"
 
 /* ===== File Helpers ===== */
-static char *read_file_contents(const char *path) {
-    FILE *f = fopen(path, "rb");
-    if (!f) return NULL;
+static char* read_file_contents(const char* path) {
+    FILE* f = fopen(path, "rb");
+    if (!f)
+        return NULL;
     fseek(f, 0, SEEK_END);
     long size = ftell(f);
     fseek(f, 0, SEEK_SET);
-    if (size < 0) { fclose(f); return NULL; }
-    char *buf = (char *)malloc((size_t)size + 1);
-    if (!buf) { fclose(f); return NULL; }
+    if (size < 0) {
+        fclose(f);
+        return NULL;
+    }
+    char* buf = (char*)malloc((size_t)size + 1);
+    if (!buf) {
+        fclose(f);
+        return NULL;
+    }
     size_t nread = fread(buf, 1, (size_t)size, f);
     buf[nread] = '\0';
     fclose(f);
     return buf;
 }
 
-static bool file_exists(const char *path) {
+static bool file_exists(const char* path) {
     struct stat st;
     return stat(path, &st) == 0;
 }
 
-static bool is_directory(const char *path) {
+static bool is_directory(const char* path) {
     struct stat st;
-    if (stat(path, &st) != 0) return false;
+    if (stat(path, &st) != 0)
+        return false;
     return S_ISDIR(st.st_mode);
 }
 
-static time_t file_mtime(const char *path) {
+static time_t file_mtime(const char* path) {
     struct stat st;
-    if (stat(path, &st) != 0) return 0;
+    if (stat(path, &st) != 0)
+        return 0;
     return st.st_mtime;
 }
 
 /* Recursively remove a directory */
-static int remove_dir_recursive(const char *path) {
-    DIR *d = opendir(path);
-    if (!d) return -1;
+static int remove_dir_recursive(const char* path) {
+    DIR* d = opendir(path);
+    if (!d)
+        return -1;
 
-    struct dirent *ent;
+    struct dirent* ent;
     int result = 0;
     while ((ent = readdir(d)) != NULL) {
-        if (strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0) continue;
+        if (strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0)
+            continue;
 
         char full[1024];
         snprintf(full, sizeof(full), "%s/%s", path, ent->d_name);
@@ -81,47 +92,52 @@ static int remove_dir_recursive(const char *path) {
         } else {
             result = remove(full);
         }
-        if (result != 0) break;
+        if (result != 0)
+            break;
     }
     closedir(d);
-    if (result == 0) result = rmdir(path);
+    if (result == 0)
+        result = rmdir(path);
     return result;
 }
 
 /* Collect .xs files from a directory into a list */
 typedef struct {
-    char **paths;
-    int    count;
-    int    capacity;
+    char** paths;
+    int count;
+    int capacity;
 } FileList;
 
-static void filelist_init(FileList *fl) {
+static void filelist_init(FileList* fl) {
     fl->capacity = 32;
     fl->count = 0;
-    fl->paths = (char **)malloc((size_t)fl->capacity * sizeof(char *));
+    fl->paths = (char**)malloc((size_t)fl->capacity * sizeof(char*));
 }
 
-static void filelist_add(FileList *fl, const char *path) {
+static void filelist_add(FileList* fl, const char* path) {
     if (fl->count >= fl->capacity) {
         fl->capacity *= 2;
-        fl->paths = (char **)realloc(fl->paths, (size_t)fl->capacity * sizeof(char *));
+        fl->paths = (char**)realloc(fl->paths, (size_t)fl->capacity * sizeof(char*));
     }
     fl->paths[fl->count++] = strdup(path);
 }
 
-static void filelist_free(FileList *fl) {
-    for (int i = 0; i < fl->count; i++) free(fl->paths[i]);
+static void filelist_free(FileList* fl) {
+    for (int i = 0; i < fl->count; i++)
+        free(fl->paths[i]);
     free(fl->paths);
     fl->paths = NULL;
     fl->count = 0;
 }
 
-static void collect_xs_files(const char *dir, FileList *fl) {
-    DIR *d = opendir(dir);
-    if (!d) return;
-    struct dirent *ent;
+static void collect_xs_files(const char* dir, FileList* fl) {
+    DIR* d = opendir(dir);
+    if (!d)
+        return;
+    struct dirent* ent;
     while ((ent = readdir(d)) != NULL) {
-        if (ent->d_name[0] == '.') continue;
+        if (ent->d_name[0] == '.')
+            continue;
 
         char full[1024];
         snprintf(full, sizeof(full), "%s/%s", dir, ent->d_name);
@@ -140,8 +156,8 @@ static void collect_xs_files(const char *dir, FileList *fl) {
 }
 
 /* Compile and run a single file. Returns 0 on success. */
-static int run_xs_file(const char *path) {
-    char *source = read_file_contents(path);
+static int run_xs_file(const char* path) {
+    char* source = read_file_contents(path);
     if (!source) {
         fprintf(stderr, "%serror:%s Cannot read %s\n", CLR_RED, CLR_RESET, path);
         return 1;
@@ -150,10 +166,10 @@ static int run_xs_file(const char *path) {
     Lexer lexer;
     lexer_init(&lexer, source);
     int token_count = 0;
-    Token *tokens = lexer_tokenize_all(&lexer, &token_count);
+    Token* tokens = lexer_tokenize_all(&lexer, &token_count);
     if (lexer.had_error) {
-        fprintf(stderr, "%serror:%s Lexer error in %s: %s\n",
-                CLR_RED, CLR_RESET, path, lexer.error_msg);
+        fprintf(stderr, "%serror:%s Lexer error in %s: %s\n", CLR_RED, CLR_RESET, path,
+                lexer.error_msg);
         free(tokens);
         free(source);
         return 1;
@@ -161,7 +177,7 @@ static int run_xs_file(const char *path) {
 
     Parser parser;
     parser_init(&parser, tokens, token_count);
-    AstNode *program = parser_parse_program(&parser);
+    AstNode* program = parser_parse_program(&parser);
     if (parser_had_error(&parser)) {
         fprintf(stderr, "%serror:%s Parse error in %s\n", CLR_RED, CLR_RESET, path);
         parser_print_errors(&parser);
@@ -190,8 +206,8 @@ static int run_xs_file(const char *path) {
     VMResult result = vm_execute(&vm, &chunk);
     int exit_code = (result == VM_OK) ? 0 : 1;
     if (result == VM_RUNTIME_ERROR) {
-        fprintf(stderr, "%serror:%s Runtime error in %s: %s\n",
-                CLR_RED, CLR_RESET, path, vm.error_msg);
+        fprintf(stderr, "%serror:%s Runtime error in %s: %s\n", CLR_RED, CLR_RESET, path,
+                vm.error_msg);
     }
 
     vm_free(&vm);
@@ -203,14 +219,15 @@ static int run_xs_file(const char *path) {
 }
 
 /* Compile a file to bytecode. Returns 0 on success. */
-static int build_xs_file(const char *path, const char *out_dir) {
-    char *source = read_file_contents(path);
-    if (!source) return 1;
+static int build_xs_file(const char* path, const char* out_dir) {
+    char* source = read_file_contents(path);
+    if (!source)
+        return 1;
 
     Lexer lexer;
     lexer_init(&lexer, source);
     int token_count = 0;
-    Token *tokens = lexer_tokenize_all(&lexer, &token_count);
+    Token* tokens = lexer_tokenize_all(&lexer, &token_count);
     if (lexer.had_error) {
         free(tokens);
         free(source);
@@ -219,7 +236,7 @@ static int build_xs_file(const char *path, const char *out_dir) {
 
     Parser parser;
     parser_init(&parser, tokens, token_count);
-    AstNode *program = parser_parse_program(&parser);
+    AstNode* program = parser_parse_program(&parser);
     if (parser_had_error(&parser)) {
         ast_free(program);
         free(tokens);
@@ -240,7 +257,7 @@ static int build_xs_file(const char *path, const char *out_dir) {
     }
 
     /* Determine output path */
-    const char *basename = strrchr(path, '/');
+    const char* basename = strrchr(path, '/');
     basename = basename ? basename + 1 : path;
 
     char out_path[1024];
@@ -249,11 +266,11 @@ static int build_xs_file(const char *path, const char *out_dir) {
     if (olen > 3 && strcmp(out_path + olen - 3, ".xs") == 0) {
         out_path[olen - 2] = 'x';
         out_path[olen - 1] = 's';
-        out_path[olen]     = 'b';
+        out_path[olen] = 'b';
         out_path[olen + 1] = '\0';
     }
 
-    FILE *f = fopen(out_path, "wb");
+    FILE* f = fopen(out_path, "wb");
     if (f) {
         fwrite(chunk.code, 1, (size_t)chunk.code_count, f);
         fclose(f);
@@ -269,8 +286,8 @@ static int build_xs_file(const char *path, const char *out_dir) {
 /* ===== @run: Find main.xs and run it ===== */
 int xs_shortcut_run(void) {
     /* Search order: main.xs, src/main.xs */
-    const char *candidates[] = { "main.xs", "src/main.xs", NULL };
-    const char *found = NULL;
+    const char* candidates[] = {"main.xs", "src/main.xs", NULL};
+    const char* found = NULL;
 
     for (int i = 0; candidates[i]; i++) {
         if (file_exists(candidates[i])) {
@@ -322,8 +339,8 @@ int xs_shortcut_build(void) {
     if (failures == 0) {
         printf("%ssuccess:%s Built %d file(s)\n", CLR_GREEN, CLR_RESET, files.count);
     } else {
-        fprintf(stderr, "%serror:%s %d of %d file(s) failed\n",
-                CLR_RED, CLR_RESET, failures, files.count);
+        fprintf(stderr, "%serror:%s %d of %d file(s) failed\n", CLR_RED, CLR_RESET, failures,
+                files.count);
     }
 
     filelist_free(&files);
@@ -353,8 +370,8 @@ int xs_shortcut_test(void) {
     printf("%s@test%s Running tests...\n", CLR_YELLOW, CLR_RESET);
 
     /* Look for tests/ or test/ directory */
-    const char *test_dirs[] = { "tests", "test", NULL };
-    const char *test_dir = NULL;
+    const char* test_dirs[] = {"tests", "test", NULL};
+    const char* test_dir = NULL;
     for (int i = 0; test_dirs[i]; i++) {
         if (is_directory(test_dirs[i])) {
             test_dir = test_dirs[i];
@@ -392,8 +409,8 @@ int xs_shortcut_test(void) {
         }
     }
 
-    printf("\n%sResults:%s %d passed, %d failed, %d total\n",
-           CLR_BOLD, CLR_RESET, passed, failed, files.count);
+    printf("\n%sResults:%s %d passed, %d failed, %d total\n", CLR_BOLD, CLR_RESET, passed, failed,
+           files.count);
 
     filelist_free(&files);
     return failed > 0 ? 1 : 0;
@@ -401,8 +418,7 @@ int xs_shortcut_test(void) {
 
 /* ===== @watch: stat() loop checking mtimes, rebuild on change ===== */
 int xs_shortcut_watch(void) {
-    printf("%s@watch%s Watching for file changes (Ctrl+C to stop)...\n",
-           CLR_YELLOW, CLR_RESET);
+    printf("%s@watch%s Watching for file changes (Ctrl+C to stop)...\n", CLR_YELLOW, CLR_RESET);
 
     FileList files;
     filelist_init(&files);
@@ -418,7 +434,7 @@ int xs_shortcut_watch(void) {
     }
 
     /* Store initial mtimes */
-    time_t *mtimes = (time_t *)calloc((size_t)files.count, sizeof(time_t));
+    time_t* mtimes = (time_t*)calloc((size_t)files.count, sizeof(time_t));
     for (int i = 0; i < files.count; i++) {
         mtimes[i] = file_mtime(files.paths[i]);
     }
@@ -451,8 +467,7 @@ int xs_shortcut_watch(void) {
             if (failures == 0) {
                 printf("  %sBuild successful%s\n", CLR_GREEN, CLR_RESET);
             } else {
-                fprintf(stderr, "  %sBuild failed%s (%d error(s))\n",
-                        CLR_RED, CLR_RESET, failures);
+                fprintf(stderr, "  %sBuild failed%s (%d error(s))\n", CLR_RED, CLR_RESET, failures);
             }
         }
 
@@ -485,7 +500,7 @@ int xs_shortcut_check(void) {
 
     int total_errors = 0, total_warnings = 0;
     for (int i = 0; i < files.count; i++) {
-        XsLintResult *result = xs_lint_file(files.paths[i]);
+        XsLintResult* result = xs_lint_file(files.paths[i]);
         if (result) {
             if (result->count > 0) {
                 xs_lint_result_print(result);
@@ -513,31 +528,35 @@ int xs_shortcut_info(void) {
     printf("  ─────────────────────────\n");
 
     /* Try to read .xsproj */
-    char *proj = read_file_contents(".xsproj");
+    char* proj = read_file_contents(".xsproj");
     if (proj) {
         /* Simple key-value parsing (lines like "key = value") */
-        char *line = strtok(proj, "\n");
+        char* line = strtok(proj, "\n");
         while (line) {
             /* Skip comments and empty lines */
-            while (*line == ' ' || *line == '\t') line++;
+            while (*line == ' ' || *line == '\t')
+                line++;
             if (*line == '#' || *line == '\0' || *line == '[') {
                 line = strtok(NULL, "\n");
                 continue;
             }
 
             /* Find '=' separator */
-            char *eq = strchr(line, '=');
+            char* eq = strchr(line, '=');
             if (eq) {
                 *eq = '\0';
-                char *key = line;
-                char *val = eq + 1;
+                char* key = line;
+                char* val = eq + 1;
 
                 /* Trim whitespace */
-                while (*key == ' ') key++;
-                char *kend = key + strlen(key) - 1;
-                while (kend > key && *kend == ' ') *kend-- = '\0';
+                while (*key == ' ')
+                    key++;
+                char* kend = key + strlen(key) - 1;
+                while (kend > key && *kend == ' ')
+                    *kend-- = '\0';
 
-                while (*val == ' ') val++;
+                while (*val == ' ')
+                    val++;
                 /* Trim quotes */
                 size_t vlen = strlen(val);
                 if (vlen >= 2 && val[0] == '"' && val[vlen - 1] == '"') {
@@ -564,10 +583,11 @@ int xs_shortcut_info(void) {
     /* Total lines of code */
     int total_lines = 0;
     for (int i = 0; i < files.count; i++) {
-        char *src = read_file_contents(files.paths[i]);
+        char* src = read_file_contents(files.paths[i]);
         if (src) {
-            for (const char *p = src; *p; p++) {
-                if (*p == '\n') total_lines++;
+            for (const char* p = src; *p; p++) {
+                if (*p == '\n')
+                    total_lines++;
             }
             total_lines++; /* last line */
             free(src);
@@ -585,14 +605,21 @@ int xs_shortcut_info(void) {
 }
 
 /* ===== Main Shortcut Dispatcher ===== */
-int xs_handle_shortcut(const char *name) {
-    if (strcmp(name, "run") == 0)   return xs_shortcut_run();
-    if (strcmp(name, "build") == 0) return xs_shortcut_build();
-    if (strcmp(name, "clean") == 0) return xs_shortcut_clean();
-    if (strcmp(name, "test") == 0)  return xs_shortcut_test();
-    if (strcmp(name, "watch") == 0) return xs_shortcut_watch();
-    if (strcmp(name, "check") == 0) return xs_shortcut_check();
-    if (strcmp(name, "info") == 0)  return xs_shortcut_info();
+int xs_handle_shortcut(const char* name) {
+    if (strcmp(name, "run") == 0)
+        return xs_shortcut_run();
+    if (strcmp(name, "build") == 0)
+        return xs_shortcut_build();
+    if (strcmp(name, "clean") == 0)
+        return xs_shortcut_clean();
+    if (strcmp(name, "test") == 0)
+        return xs_shortcut_test();
+    if (strcmp(name, "watch") == 0)
+        return xs_shortcut_watch();
+    if (strcmp(name, "check") == 0)
+        return xs_shortcut_check();
+    if (strcmp(name, "info") == 0)
+        return xs_shortcut_info();
 
     fprintf(stderr, "%serror:%s Unknown shortcut '@%s'\n", CLR_RED, CLR_RESET, name);
     fprintf(stderr, "Available: @run, @build, @clean, @test, @watch, @check, @info\n");

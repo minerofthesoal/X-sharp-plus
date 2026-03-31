@@ -98,7 +98,7 @@ endif()
 # Tests
 if(XS_BUILD_TESTS)
     enable_testing()
-    file(GLOB_RECURSE TEST_SOURCES tests/**/*.c)
+    file(GLOB_RECURSE TEST_SOURCES tests/*.c)
     add_executable(xsharp-tests ${TEST_SOURCES}
         ${CORE_SOURCES} ${STDLIB_SOURCES})
     target_include_directories(xsharp-tests PRIVATE src/ stdlib/ tests/)
